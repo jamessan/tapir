@@ -1,0 +1,92 @@
+{
+   "abstract" : "A Thrift-based rapid API framework",
+   "author" : [
+      "Eric Waters <ewaters@gmail.com>"
+   ],
+   "dynamic_config" : 1,
+   "generated_by" : "Module::Build version 0.4003, CPAN::Meta::Converter version 2.120921",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "Tapir",
+   "prereqs" : {
+      "build" : {
+         "requires" : {
+            "Test::Deep" : "0",
+            "Test::More" : "0"
+         }
+      },
+      "configure" : {
+         "requires" : {
+            "Module::Build" : "0.4"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "Devel::Declare" : "0",
+            "Moose" : "0",
+            "POE::Component::Sequence" : "0.02",
+            "Thrift::Parser" : "0"
+         }
+      }
+   },
+   "provides" : {
+      "Tapir" : {
+         "file" : "lib/Tapir.pm",
+         "version" : "0.01"
+      },
+      "Tapir::Exceptions" : {
+         "file" : "lib/Tapir/Exceptions.pm",
+         "version" : 0
+      },
+      "Tapir::Logger" : {
+         "file" : "lib/Tapir/Logger.pm",
+         "version" : 0
+      },
+      "Tapir::MethodCall" : {
+         "file" : "lib/Tapir/MethodCall.pm",
+         "version" : 0
+      },
+      "Tapir::Server" : {
+         "file" : "lib/Tapir/Server.pm",
+         "version" : 0
+      },
+      "Tapir::Server::Handler" : {
+         "file" : "lib/Tapir/Server/Handler.pm",
+         "version" : 0
+      },
+      "Tapir::Server::Handler::Class" : {
+         "file" : "lib/Tapir/Server/Handler/Class.pm",
+         "version" : 0
+      },
+      "Tapir::Server::Handler::Signatures" : {
+         "file" : "lib/Tapir/Server/Handler/Signatures.pm",
+         "version" : 0
+      },
+      "Tapir::Server::Transport" : {
+         "file" : "lib/Tapir/Server/Transport.pm",
+         "version" : 0
+      },
+      "Tapir::Validator" : {
+         "file" : "lib/Tapir/Validator.pm",
+         "version" : 0
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "http://github.com/ewaters/tapir/issues?labels=bug"
+      },
+      "license" : [
+         "http://dev.perl.org/licenses/"
+      ],
+      "repository" : {
+         "url" : "http://github.com/ewaters/tapir"
+      }
+   },
+   "version" : "0.01"
+}
