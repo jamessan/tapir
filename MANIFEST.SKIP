@@ -1,0 +1,7 @@
+^Build$
+^_build/
+^MYMETA\.yml$
+^MYMETA\.json$
+^blib/
+^\.git/
+\.tar\.gz$
