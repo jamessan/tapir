@@ -1,3 +1,5 @@
+bin/audit_thrift
+bin/generate_docs.pl
 Build.PL
 lib/Tapir.pm
 lib/Tapir/Exceptions.pm
@@ -14,3 +16,8 @@ MANIFEST			This list of files
 META.json
 META.yml
 README
+t/001_handler_plain.t
+t/002_handler_signatures.t
+t/003_methodcall.t
+t/004_handler_call.t
+t/thrift/example.thrift
