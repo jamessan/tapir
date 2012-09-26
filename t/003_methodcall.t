@@ -29,8 +29,8 @@ is $call->message, $message, 'message()';
 is $call->method, 'createAccount', 'method()';
 isa_ok $call->arguments, 'Thrift::Parser::FieldSet', 'arguments()';
 
-my %args       = $call->args;
-my %args_plain = $call->args('plain');
+my %args_plain = $call->args;
+my %args       = $call->args_thrift;
 
 isa_ok $args{username}, 'Tappy::username';
 isa_ok $args{username}, 'Thrift::Parser::Type::string';

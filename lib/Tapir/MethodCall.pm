@@ -113,14 +113,25 @@ The L<Tapir::Server> object.
 
 =head2 I<args>
 
-Calls I<dereference_fieldset> on the message arguments.  If the first argument is bool true, the 'plain' will be set to true.  If the second argument is bool true, the 'insecure' flag will be set to true.
+Calls I<dereference_fieldset> on the message arguments with plain => 1 and insecure => 0.  Returns a hash.
 
 =cut
 
 sub args {
-    my ($self, $plain, $insecure) = @_;
+    my $self = shift;
+    my $hash = dereference_fieldset($self->arguments, { plain => 1, insecure => 0 });
+    return %$hash;
+}
 
-    my $hash = dereference_fieldset($self->arguments, { plain => $plain, insecure => $insecure });
+=head2 I<args_thrift>
+
+Calls I<dereference_fieldset> on the message arguments with plain => 0 and insecure => 0.  Returns a hash.
+
+=cut
+
+sub args_thrift {
+    my $self = shift;
+    my $hash = dereference_fieldset($self->arguments, { plain => 0, insecure => 0 });
     return %$hash;
 }
 
