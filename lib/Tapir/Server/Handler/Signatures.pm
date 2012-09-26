@@ -7,6 +7,8 @@ use Devel::Declare::Context::Simple;
 use base qw(Exporter);
 our @EXPORT = qw(set_service);
 
+our $ALLOW_REDEFINE = 0;
+
 sub set_service ($) {
 	my $class = caller;
 	$class->service(@_);
@@ -69,7 +71,18 @@ sub parser {
 	if (defined $name) {
 		$name = join('::', $ctx->get_curstash_name(), $name)
 			unless ($name =~ /::/);
-		$ctx->shadow(sub (&) { no strict 'refs'; *{$name} = shift; });
+		$ctx->shadow(sub (&) {
+			no strict 'refs';
+			# In testing, it's convenient to redefine methods over and over; let's allow that
+			# via the class global $ALLOW_REDEFINE
+			if ($ALLOW_REDEFINE) {
+				no warnings 'redefine';
+				*{$name} = shift;
+			}
+			else {
+				*{$name} = shift;
+			}
+		});
 	}
 	else {
 		$ctx->shadow(sub (&) { shift });
