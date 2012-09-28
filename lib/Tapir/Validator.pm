@@ -260,12 +260,12 @@ sub validate_parser_message {
 
     foreach my $spec (@{ $message->method->idl->arguments }) {
         my $field = $message->arguments->id($spec->id);
-        $self->_validate_parser_message_argument($idl, $opt, $spec, $field);
+        $self->_validate_parser_message_argument($idl, $opt, $spec, $field, $message);
     }
 }
 
 sub _validate_parser_message_argument {
-    my ($self, $idl, $opt, $spec, $field) = @_;
+    my ($self, $idl, $opt, $spec, $field, $message) = @_;
 
     my @docs;
     push @docs, $spec->{doc} if defined $spec->{doc};
@@ -280,7 +280,7 @@ sub _validate_parser_message_argument {
                     next;
                 }
                 #print "Child spec/field: " . Dumper({ field_set => $field_set, child_field => $child_field, child_spec => $child_spec });
-                $self->_validate_parser_message_argument($idl, $opt, $child_spec, $child_field);
+                $self->_validate_parser_message_argument($idl, $opt, $child_spec, $child_field, $message);
             }
         }
         push @docs, $ref_object->{doc} if defined $ref_object->{doc};
@@ -316,6 +316,10 @@ sub _validate_parser_message_argument {
             push @{ $doc->{$key} }, @{ $sub{$key} };
         }
     }
+
+	if ($doc->{default}) {
+		# TODO
+	}
 
     if (! defined $field && ! $doc->{optional} && ! $spec->optional) {
         Tapir::InvalidArgument->throw(
