@@ -37,7 +37,7 @@
    "provides" : {
       "Tapir" : {
          "file" : "lib/Tapir.pm",
-         "version" : "0.01"
+         "version" : "0.02"
       },
       "Tapir::Exceptions" : {
          "file" : "lib/Tapir/Exceptions.pm",
@@ -88,5 +88,5 @@
          "url" : "http://github.com/ewaters/tapir"
       }
    },
-   "version" : "0.01"
+   "version" : "0.02"
 }

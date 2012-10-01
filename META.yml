@@ -17,7 +17,7 @@ name: Tapir
 provides:
   Tapir:
     file: lib/Tapir.pm
-    version: 0.01
+    version: 0.02
   Tapir::Exceptions:
     file: lib/Tapir/Exceptions.pm
     version: 0
@@ -54,4 +54,4 @@ resources:
   bugtracker: http://github.com/ewaters/tapir/issues?labels=bug
   license: http://dev.perl.org/licenses/
   repository: http://github.com/ewaters/tapir
-version: 0.01
+version: 0.02
