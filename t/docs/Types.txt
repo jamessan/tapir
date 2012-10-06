@@ -1,0 +1,40 @@
+Class: Types
+
+Type: account
+
+A structure representing an account
+
+Parameters:
+
+    id - no docs (idx: 1, type: <Types.account_id>)
+    allocation - no docs (idx: 2, type: <Thrift.i32>)
+
+Type: account_id
+
+Must be a number between 1 and 10000
+
+Base type <Thrift.i32>
+
+Type: username
+
+Must be between 1 and 8 characters long
+
+Base type <Thrift.string>
+
+Class: Exceptions
+
+Type: genericCode
+
+Parameters:
+
+    code - no docs (idx: 1, type: <Thrift.i16>)
+    message - no docs (idx: 2, type: <Thrift.string>)
+
+Type: insufficientResources
+
+Parameters:
+
+    code - no docs (idx: 1, type: <Thrift.i16>)
+    message - no docs (idx: 2, type: <Thrift.string>)
+
+

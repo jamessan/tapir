@@ -11,6 +11,7 @@ my $build = Module::Build->new(
 	build_requires => {
 		'Test::More' => 0,
 		'Test::Deep' => 0,
+		'Test::File::Contents' => 0,
 	},
 	requires => {
 		'Thrift::Parser' => 0,

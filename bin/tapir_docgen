@@ -33,4 +33,4 @@ Tapir::Documentation::NaturalDocs->build(%args);
 
 print "Done!  Files written to $args{output_dir}\n";
 
-system 'rm', '-rf', $args{temp_dir};
+#system 'rm', '-rf', $args{temp_dir};
