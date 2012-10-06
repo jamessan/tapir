@@ -73,8 +73,14 @@ foreach my $service (@{ $document->services }) {
             grep { $_->can('name') }
             $validator->_audit_flatten_types($method);
 
-        print $nd "Function: ".$method->name."\n\n";
+		my $method_name = $method->name;
+		if (my $rest = $method->{doc}{rest}) {
+			$method_name = uc($rest->{method}) . ' ' .  $rest->{route};
+		}
+
+        print $nd "Function: $method_name\n\n";
         print $nd $method->{doc}{description} . "\n\n";
+		print $nd  "\n";
 
         document_object_parameters($method, 'arguments');
 
@@ -205,21 +211,15 @@ sub document_object_parameters {
 
     print $nd "Parameters:\n\n";
     foreach my $field (@fields) {
+		my @docs = (
+			map { ($_ eq 'id' ? 'idx' : $_) . ': ' . ($_ eq 'type' ? nd_type_link($field->$_) : $field->$_) }
+			grep { defined $field->$_ }
+			qw(id type optional default_value)
+		);
         printf $nd "    %s - %s (%s)\n",
             $field->name,
             ($object->{doc}{param}{ $field->name } || 'no docs'),
-            join(', ',
-                (
-                    map { ($_ eq 'id' ? 'idx' : $_) . ': ' . ($_ eq 'type' ? nd_type_link($field->$_) : $field->$_) }
-                    grep { defined $field->$_ }
-                    qw(id type optional default_value)
-                ),
-                ($field->{doc} ? (
-                    map { $_ . ': ' . join(' & ', @{ $field->{doc}{$_} }) }
-                    grep { defined $field->{doc}{$_} }
-                    qw(role)
-                ) : ()),
-            );
+            join(', ', @docs);
     }
     print $nd "\n";
 }

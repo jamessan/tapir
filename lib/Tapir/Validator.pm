@@ -150,7 +150,7 @@ sub _audit_parse_structured_comment {
     my %doc;
     $object->{doc} = \%doc;
 
-    foreach my $line (split /\n\s*/, $comment) {
+    foreach my $line (split /\n/, $comment) {
         my @parts = split /\s* (\@\w+) \s*/x, $line;
         while (defined (my $part = shift @parts)) {
             next if ! length $part;
