@@ -2,7 +2,11 @@ package Tapir::Validator;
 
 use strict;
 use warnings;
+use Data::Dumper;
 use Tapir::Exceptions;
+use Tapir::Validator::Length;
+use Tapir::Validator::Range;
+use Tapir::Validator::Regex;
 
 sub new {
 	my ($class, %self) = @_;
@@ -178,7 +182,8 @@ sub _audit_parse_structured_comment {
 			}
 			elsif ($javadoc_key eq 'validate') {
 				my ($param, $args) = $value =~ m{^(\w+) \s* (.*)$}x;
-				push @{ $doc{validate}{$param} }, $args || '';
+				my $class = 'Tapir::Validator::' . ucfirst($param);
+				push @{ $doc{validators} }, $class->new_from_string($args);
 			}
 			elsif ($javadoc_key eq 'rest') {
 				my ($method, $route) = split /\s+/, $value, 2;
@@ -264,6 +269,24 @@ sub validate_parser_message {
     }
 }
 
+sub validate_parser_reply {
+	my ($self, $message, $opt) = @_;
+    $opt ||= {};
+
+    my $idl = $message->method->idl_doc; 
+	my $return = $message->arguments->field_named('return_value');
+
+	if ($return->value->isa('Thrift::Parser::FieldSet')) {
+		foreach my $spec (@{ $return->idl->fields }) {
+			my $field = $return->value->id($spec->id);
+			$self->_validate_parser_message_argument($idl, $opt, $spec, $field, $message);
+		}
+	}
+	else {
+		die "FIXME";
+	}
+}
+
 sub _validate_parser_message_argument {
     my ($self, $idl, $opt, $spec, $field, $message) = @_;
 
@@ -306,10 +329,9 @@ sub _validate_parser_message_argument {
         }
 
         # Validate
-        foreach my $key (keys %{ $sub{validate} }) {
-            push @{ $doc->{validate}{$key} }, @{ $sub{validate}{$key} };
-        }
-        delete $sub{validate};
+		if ($sub{validators}) {
+			push @{ $doc->{validators} }, @{ delete $sub{validators} };
+		}
 
         # All else is array
         foreach my $key (keys %sub) {
@@ -346,95 +368,9 @@ sub _validate_parser_message_argument {
         );
     }
 
-    return unless $doc->{validate};
-
-    foreach my $key (keys %{ $doc->{validate} }) {
-        if ($key eq 'regex' && $field->isa('Thrift::Parser::Type::string')) {
-            foreach my $value (@{ $doc->{validate}{$key} }) {
-                my $regex;
-                if (my ($lq, $body, $rq, $opts) = $value =~ m{^\s* (\S)(.+?)(\S) ([xsmei]*) \s*$}x) {
-                    my $left_brackets  = '[{(';
-                    my $right_brackets = ']})';
-                    if ($lq eq $rq || (
-                        index($left_brackets, $lq) >= 0 &&
-                        index($left_brackets, $lq) == index($right_brackets, $rq)
-                    )) {
-                        $regex = eval "qr{$body}$opts";
-                        die $@ if $@;
-                    }
-                }
-                if (! $regex) {
-                    Tapir::InvalidSpec->throw(
-                        error => "Can't parse regex pattern from '$value'",
-                        key => ref($field),
-                    );
-                }
-                if (defined $field->value && $field->value !~ $regex) {
-                    Tapir::InvalidArgument->throw(
-                        error => "Argument $desc doesn't pass regex $value",
-                        key => $field->name, value => $field->value,
-                    );
-                }
-            }
-        }
-        elsif ($key eq 'length' && $field->isa('Thrift::Parser::Type::string')) {
-            foreach my $value (@{ $doc->{validate}{$key} }) {
-                my ($min, $max) = $value =~ /^\s* (\d*) \s*-\s* (\d*) \s*$/x;
-                $min = undef unless length $min;
-                $max = undef unless length $max;
-                if (! defined $min && ! defined $max) {
-                    Tapir::InvalidSpec->throw(
-                        error => "Can't parse length range from '$value' (format '\\d* - \\d*'",
-                        key => ref($field),
-                    );
-                }
-                my $len = length $field->value;
-                if (defined $min && $len < $min) {
-                    Tapir::InvalidArgument->throw(
-                        error => "Argument $desc is shorter than permitted ($min)",
-                        key => $field->name, value => $field->value,
-                    );
-                }
-                if (defined $max && $len > $max) {
-                    Tapir::InvalidArgument->throw(
-                        error => "Argument $desc is longer than permitted ($max)",
-                        key => $field->name, value => $field->value,
-                    );
-                }
-            }
-        }
-        elsif ($key eq 'range' && $field->isa('Thrift::Parser::Type::Number')) {
-            foreach my $value (@{ $doc->{validate}{$key} }) {
-                my ($min, $max) = $value =~ /^\s* (\d*) \s*-\s* (\d*) \s*$/x;
-                $min = undef unless length $min;
-                $max = undef unless length $max;
-                if (! defined $min && ! defined $max) {
-                    Tapir::InvalidSpec->throw(
-                        error => "Can't parse number range from '$value' (format '\\d* - \\d*'",
-                        key => ref($field),
-                    );
-                }
-                if (defined $min && $field->value < $min) {
-                    Tapir::InvalidArgument->throw(
-                        error => "Argument $desc is smaller than permitted ($min)",
-                        key => $field->name, value => $field->value,
-                    );
-                }
-                if (defined $max && $field->value > $max) {
-                    Tapir::InvalidArgument->throw(
-                        error => "Argument $desc is longer than permitted ($max)",
-                        key => $field->name, value => $field->value,
-                    );
-                }
-            }
-        }
-        else {
-            Tapir::InvalidSpec->throw(
-                error => "Validate key '$key' and field type '".ref($field)."' is not valid",
-                key => ref($field),
-            );
-
-        }
+    return unless $doc->{validators};
+    foreach my $validator (@{ $doc->{validators} }) {
+		$validator->validate_field($field, $desc);
     }
 }
 
