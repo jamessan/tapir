@@ -149,18 +149,35 @@ sub _audit_parse_structured_comment {
         return "$object has no comments";
     }
 
-    my $comment = join "\n", map { $_->escaped_value } @comments;
+    my $comment = join "\n", map { $_->escaped_value_with_whitespace } @comments;
+
+	# If it's a multi-line comment, remove the common whitespace in front of each line
+	if ($comment =~ m/\n/) {
+		$comment =~ s/^[ ]*\n?//;
+		$comment =~ s/\n?[ ]*$//;
+
+		my ($common_whitespace) = $comment =~ m/^(\s+)/;
+		my @lines = split /\n/, $comment;
+		my @match = grep { /^($common_whitespace|$)/ } @lines;
+		if (int @lines == int @match) {
+			$comment = join "\n", map { s/^$common_whitespace//; $_ } @lines;
+		}
+	}
+	else {
+		$comment =~ s/^\s+//;
+		$comment =~ s/\s+$//;
+	}
 
     my %doc;
     $object->{doc} = \%doc;
-
-    foreach my $line (split /\n/, $comment) {
-        my @parts = split /\s* (\@\w+) \s*/x, $line;
+	{
+        my @parts = split /(\@\w+)/x, $comment;
         while (defined (my $part = shift @parts)) {
             next if ! length $part;
             my ($javadoc_key) = $part =~ m{^\@(\w+)$};
 
             if (! $javadoc_key) {
+				$part =~ s/\s+$//;
                 if (! defined $doc{description}) {
                     $doc{description} = $part;
                 }
@@ -176,6 +193,7 @@ sub _audit_parse_structured_comment {
 			}
 
 			my $value = shift @parts;
+			$value =~ s/^\s+//;
 			if ($javadoc_key eq 'param') {
 				my ($param, $description) = $value =~ m{^(\w+) \s* (.*)$}x;
 				$doc{param}{$param} = $description || '';
@@ -287,27 +305,16 @@ sub validate_parser_reply {
 	}
 }
 
-sub _validate_parser_message_argument {
-    my ($self, $idl, $opt, $spec, $field, $message) = @_;
+sub doc_from_idl_object {
+	my ($self, $idl, $spec) = @_;
 
     my @docs;
     push @docs, $spec->{doc} if defined $spec->{doc};
 
-    if (defined $field && $spec->type->isa('Thrift::IDL::Type::Custom')) {
+    if ($spec->type->isa('Thrift::IDL::Type::Custom')) {
         my $ref_object = $idl->object_full_named($spec->type->full_name);
-        if ($ref_object && $ref_object->isa('Thrift::IDL::Struct')) {
-            my $field_set = $field->value;
-            foreach my $child_spec (@{ $ref_object->fields }) {
-                my $child_field = $field_set->id($child_spec->id);
-                if (! defined $child_field) {
-                    next;
-                }
-                #print "Child spec/field: " . Dumper({ field_set => $field_set, child_field => $child_field, child_spec => $child_spec });
-                $self->_validate_parser_message_argument($idl, $opt, $child_spec, $child_field, $message);
-            }
-        }
         push @docs, $ref_object->{doc} if defined $ref_object->{doc};
-    }
+	}
 
     # Create an aggregate doc from the list of @docs
     my $doc = {};
@@ -336,6 +343,29 @@ sub _validate_parser_message_argument {
         # All else is array
         foreach my $key (keys %sub) {
             push @{ $doc->{$key} }, @{ $sub{$key} };
+        }
+    }
+
+	return $doc;
+}
+
+sub _validate_parser_message_argument {
+    my ($self, $idl, $opt, $spec, $field, $message) = @_;
+
+	my $doc = $self->doc_from_idl_object($idl, $spec);
+
+    if (defined $field && $spec->type->isa('Thrift::IDL::Type::Custom')) {
+        my $ref_object = $idl->object_full_named($spec->type->full_name);
+        if ($ref_object && $ref_object->isa('Thrift::IDL::Struct')) {
+            my $field_set = $field->value;
+            foreach my $child_spec (@{ $ref_object->fields }) {
+                my $child_field = $field_set->id($child_spec->id);
+                if (! defined $child_field) {
+                    next;
+                }
+                #print "Child spec/field: " . Dumper({ field_set => $field_set, child_field => $child_field, child_spec => $child_spec });
+                $self->_validate_parser_message_argument($idl, $opt, $child_spec, $child_field, $message);
+            }
         }
     }
 

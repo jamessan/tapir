@@ -5,7 +5,7 @@ use warnings;
 use FindBin;
 use File::ChangeNotify;
 
-my $run_upon_lib_change = $ARGV[0];
+my $run_upon_lib_change = join ' ', @ARGV;
 
 $ENV{REPO_PATH} ||= $FindBin::Bin . '/../../';
 chdir $ENV{REPO_PATH};

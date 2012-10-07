@@ -11,23 +11,23 @@ sub new {
 sub new_from_string {
 	my ($class, $string) = @_;
 	my $regex;
-	if (my ($lq, $body, $rq, $opts) = $string =~ m{^\s* (\S)(.+?)(\S) ([xsmei]*) \s*$}x) {
-		my $left_brackets  = '[{(';
-		my $right_brackets = ']})';
-		if ($lq eq $rq || (
-				index($left_brackets, $lq) >= 0 &&
-				index($left_brackets, $lq) == index($right_brackets, $rq)
-			)) {
-			$regex = eval "qr{$body}$opts";
-			die $@ if $@;
-		}
+	my ($lq, $body, $rq, $opts) = $string =~ m{^\s* (\S)(.+?)(\S) ([xsmei]*) \s*$}x;
+
+	my $left_brackets  = '[{(';
+	my $right_brackets = ']})';
+	if ($lq eq $rq || (
+			index($left_brackets, $lq) >= 0 &&
+			index($left_brackets, $lq) == index($right_brackets, $rq)
+		)) {
+		$regex = eval "qr{$body}$opts";
+		die $@ if $@;
 	}
 	if (! $regex) {
 		Tapir::InvalidSpec->throw(
 			error => "Can't parse regex pattern from '$string'",
 		);
 	}
-	return $class->new(string => $string, regex => $regex);
+	return $class->new(string => $string, regex => $regex, body => $body, opts => $opts);
 }
 
 sub validate_field {
@@ -47,6 +47,11 @@ sub validate_field {
 			key => $field->name, value => $field->value,
 		);
 	}
+}
+
+sub documentation {
+	my $self = shift;
+	return "Must match m/$self->{body}/$self->{opts}";
 }
 
 1;

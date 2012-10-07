@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More;
+use Test::More tests => 7;
 use Test::Exception;
 use File::Spec;
 
@@ -56,5 +56,3 @@ $account = $createAccount->compose_reply({
 	allocation => 958,
 });
 lives_ok { $validator->validate_parser_reply($account) } "Reply is just right";
-
-done_testing;

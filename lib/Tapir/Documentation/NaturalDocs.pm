@@ -9,7 +9,7 @@ use File::Path;
 use File::Spec;
 use Tapir::Validator;
 
-my ($nd, %created_files, %args);
+my ($nd, %created_files, %args, $document);
 my $validator = Tapir::Validator->new();
 
 sub build {
@@ -28,7 +28,7 @@ sub build {
 
 	## Read the document and audit it
 
-	my $document = Thrift::IDL->parse_thrift_file($args{input_fn}, $args{debug});
+	$document = Thrift::IDL->parse_thrift_file($args{input_fn}, $args{debug});
 
 	if (my @audit = $validator->audit_idl_document($document)) {
 		print "ERROR: File didn't pass consistency check:\n";
@@ -62,9 +62,10 @@ sub build {
 
 			print $nd "Function: $method_name\n\n";
 			print $nd $method->{doc}{description} . "\n\n";
-			print $nd  "\n";
+			print $nd "\n";
 
 			document_object_parameters($method, 'arguments');
+			print $nd "\n";
 
 			if (! $method->oneway) {
 				print $nd "Returns:\n\n";
@@ -73,7 +74,7 @@ sub build {
 
 				if (my @throws = @{ $method->throws }) {
 					print $nd "Throws:\n\n";
-					print $nd nd_type_link($_->type) . " (idx: " . $_->id . ")\n" foreach @throws;
+					print $nd "    " . nd_type_link($_->type) . " (idx: " . $_->id . ")\n" foreach @throws;
 					print $nd "\n";
 				}
 			}
@@ -109,6 +110,11 @@ sub build {
 			foreach my $comment (@{ $type->comments }) {
 				print $nd $comment->escaped_value . "\n\n";
 			}
+		}
+
+		if ($type->{doc}{validators}) {
+			my @parts = map { $_->documentation } @{ $type->{doc}{validators} };
+			print $nd join (". ", @parts) . "\n\n";
 		}
 
 		if ($type->isa('Thrift::IDL::TypeDef')) {
@@ -196,12 +202,20 @@ sub document_object_parameters {
 			grep { defined $field->$_ }
 			qw(id type optional default_value)
 		);
+		my $doc_string = $object->{doc}{param}{ $field->name } || '';
+
+		my $doc = $validator->doc_from_idl_object($document, $field);
+		if ($doc->{validators}) {
+			$doc_string .= '. ' unless ! length $doc_string || $doc_string =~ m/\.\s*$/;
+			$doc_string .= join '. ', map { $_->documentation } @{ $doc->{validators} };
+		}
+
         printf $nd "    %s - %s (%s)\n",
             $field->name,
-            ($object->{doc}{param}{ $field->name } || 'no docs'),
+			($doc_string || 'no docs'),
             join(', ', @docs);
     }
-    print $nd "\n";
+	#print $nd "\n";
 }
 
 sub start_class {

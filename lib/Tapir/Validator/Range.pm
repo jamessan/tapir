@@ -48,4 +48,18 @@ sub validate_field {
 	}
 }
 
+sub documentation {
+	my $self = shift;
+	my ($min, $max) = @{ $self }{'min', 'max'};
+	if (defined $min && defined $max) {
+		return "Must be between $min and $max";
+	}
+	if (defined $min) {
+		return "Must be greater or equal to $min";
+	}
+	if (defined $max) {
+		return "Must be less than or equal to $max";
+	}
+}
+
 1;
