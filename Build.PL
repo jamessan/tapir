@@ -18,6 +18,7 @@ my $build = Module::Build->new(
 		'POE::Component::Sequence' => '0.02',
 		'Moose' => 0,
 		'Devel::Declare' => 0,
+		'File::Spec' => 0,
 	},
 	create_makefile_pl => 'small',
 	meta_merge => {

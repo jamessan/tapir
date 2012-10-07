@@ -6,6 +6,7 @@ use Data::Dumper;
 use Thrift::IDL;
 use File::Copy;
 use File::Path;
+use File::Spec;
 use Tapir::Validator;
 
 my ($nd, %created_files, %args);
@@ -17,8 +18,8 @@ sub build {
 
 	die "Invalid thrift file" unless $args{input_fn} && -f $args{input_fn};
 
-	$args{process_dir} = $args{temp_dir} . 'process/';
-	$args{project_dir} = $args{temp_dir} . 'project/';
+	$args{process_dir} ||= File::Spec->catdir($args{temp_dir}, 'process');
+	$args{project_dir} ||= File::Spec->catdir($args{temp_dir}, 'project');
 
 	foreach my $dir (map { $args{$_} } qw(process_dir project_dir output_dir)) {
 		next if -d $dir;
@@ -209,7 +210,7 @@ sub start_class {
     close $nd if $nd;
 
     my $local = $class . '.txt';
-    my $output_fn = $args{process_dir} . $local;
+    my $output_fn = File::Spec->catfile($args{process_dir}, $local);
     $created_files{$local}++;
 
     open $nd, '>', $output_fn or die "Can't open '$output_fn' for writing: $!";
