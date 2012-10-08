@@ -985,7 +985,7 @@ foreach my $service (@{ $document->services }) {
 }
 
 sub describe_type {
-    my ($type, $wantPerl) = @_;
+    my ($type, $want_perl) = @_;
 
     if ($type->can('val_type')) {
         my %details = (
@@ -996,17 +996,17 @@ sub describe_type {
             $details{keyType} = describe_type($type->key_type, 1);
         }
 
-        return $wantPerl ? \%details : $jsonxs->encode(\%details);
+        return $want_perl ? \%details : $jsonxs->encode(\%details);
     }
 
-    return $wantPerl ? $type->name : "'" . $type->name . "'";
+    return $want_perl ? $type->name : "'" . $type->name . "'";
 }
 
 sub describe_fields {
-    my ($fields, $wantPerl, $noHeader) = @_;
+    my ($fields, $want_perl, $no_header) = @_;
 
     my @output = (
-        ($noHeader ? () : (
+        ($no_header ? () : (
         [qw(index name optional type validateSpec)],
         ))
     );
@@ -1024,7 +1024,7 @@ sub describe_fields {
         ];
     }
 
-    return $wantPerl ? \@output : '_table2objects(' . $jsonxs->encode(\@output) . ')';
+    return $want_perl ? \@output : '_table2objects(' . $jsonxs->encode(\@output) . ')';
 }
 
 sub describe_validateSpec {
