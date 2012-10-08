@@ -31,7 +31,7 @@ dojo.declare('Tapir', null, {
     pendingRequests: {},
 
     // Methods
-    
+
     namedTypeObject: function (param) {
         var name, obj;
 
@@ -47,6 +47,9 @@ dojo.declare('Tapir', null, {
         }
 
         if (this.thriftInternalTypes[ name ]) {
+            if (! Tapir.Type[name]) {
+                throw "Unexpected: No Tapir.Type." + name + " class found";
+            }
             obj = new Tapir.Type[name] (param);
         }
         else {
@@ -374,7 +377,7 @@ dojo.declare('Tapir.Type', null, {
         }
         return hash;
     }
-        
+
 });
 
 dojo.declare('Tapir.Type.bool', Tapir.Type, {
@@ -406,7 +409,7 @@ dojo.declare('Tapir.Type.Number', Tapir.Type, {
         if (null === value) {
             return TapirClient.validateError("Number cannot be null");
         }
-        if (Math.abs(value) > this._max_value) {
+        if (this._max_value && Math.abs(value) > this._max_value) {
             return TapirClient.validateError("Number is too large");
         }
         return true;
@@ -423,6 +426,8 @@ dojo.declare('Tapir.Type.i32', Tapir.Type.Number, {
 });
 dojo.declare('Tapir.Type.i64', Tapir.Type.Number, {
     _max_value: Math.pow(2, 63)
+});
+dojo.declare('Tapir.Type.double', Tapir.Type.Number, {
 });
 
 dojo.declare('Tapir.Type.Custom', Tapir.Type, {
@@ -1024,34 +1029,34 @@ sub describe_fields {
 
 sub describe_validateSpec {
     my $type = shift;
-	return [] unless $type->{doc};
+    return [] unless $type->{doc};
 
     my @spec;
 
     if ($type->{doc}{validators}) {
-		foreach my $validator (@{ $type->{doc}{validators} }) {
-			my ($type) = ref($validator) =~ m{::([^:]+)$};
-			my %spec_details = (
-				type => lc($type)
-			);
-			push @spec, \%spec_details;
+        foreach my $validator (@{ $type->{doc}{validators} }) {
+            my ($type) = ref($validator) =~ m{::([^:]+)$};
+            my %spec_details = (
+                type => lc($type)
+            );
+            push @spec, \%spec_details;
 
-			if ($type eq 'Range' || $type eq 'Length') {
-				$spec_details{low}  = $validator->{min};
-				$spec_details{high} = $validator->{max};
-			}
-			elsif ($type eq 'Regex') {
-				# Javascript doesn't support POSIX named character classes
-				my $pattern = $validator->{body};
-				$pattern =~ s{\[:alnum:\]}{A-Za-z0-9}g;
-				if ($pattern =~ /\[:([a-z]+):\]/) {
-					print STDERR "Failed to convert POSIX named character class '$1'\n";
-				}
-				$spec_details{pattern} = $pattern;
-			}
-			else {
-				print STDERR "Unrecognized \@validate spec '$type'\n";
-			}
+            if ($type eq 'Range' || $type eq 'Length') {
+                $spec_details{low}  = $validator->{min};
+                $spec_details{high} = $validator->{max};
+            }
+            elsif ($type eq 'Regex') {
+                # Javascript doesn't support POSIX named character classes
+                my $pattern = $validator->{body};
+                $pattern =~ s{\[:alnum:\]}{A-Za-z0-9}g;
+                if ($pattern =~ /\[:([a-z]+):\]/) {
+                    print STDERR "Failed to convert POSIX named character class '$1'\n";
+                }
+                $spec_details{pattern} = $pattern;
+            }
+            else {
+                print STDERR "Unrecognized \@validate spec '$type'\n";
+            }
         }
     }
 
