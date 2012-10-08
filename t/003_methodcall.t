@@ -17,12 +17,12 @@ my $idl = Thrift::IDL->parse_thrift_file(File::Spec->catfile($FindBin::Bin, 'thr
 my $parser = Thrift::Parser->new(idl => $idl, service => 'Accounts');
 
 my $message = Tappy::Accounts::createAccount->compose_message_call(
-	username => 'johndoe',
-	password => '12345',
+    username => 'johndoe',
+    password => '12345',
 );
 
 my $call = Tapir::MethodCall->new(
-	message => $message
+    message => $message
 );
 
 isa_ok $call, 'Tapir::MethodCall';

@@ -17,7 +17,7 @@ GetOptions(
 );
 
 if (my @missing_args = grep { ! $opt{$_} } qw(idl out)) {
-	die "Must pass ".(join ', ', map { "--" . $_ } @missing_args)."\n";
+    die "Must pass ".(join ', ', map { "--" . $_ } @missing_args)."\n";
 }
 
 my $document = Thrift::IDL->parse_thrift_file($opt{idl});
@@ -27,21 +27,21 @@ die "IDL file failed audit\n" if @audit_errors;
 
 my $comp_source;
 {
-	local $/ = undef;
-	$comp_source = <DATA>;
+    local $/ = undef;
+    $comp_source = <DATA>;
 }
 
 my $mason_output = '';
 my $interp = HTML::Mason::Interp->new(
-	out_method => \$mason_output,
+    out_method => \$mason_output,
 );
 my $comp = $interp->make_component( comp_file => $FindBin::Bin . '/tapir.mjs' );
 #my $comp = $interp->make_component( comp_source => $comp_source );
 
 my $return_value = $interp->exec(
-	$comp,
-	document => $document,
-	types => $validator->{custom_types},
+    $comp,
+    document => $document,
+    types => $validator->{custom_types},
 );
 
 open my $out, '>', $opt{out} or die "Couldn't write to '$opt{out}': $!";

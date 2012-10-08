@@ -18,9 +18,9 @@ use Try::Tiny;
 use Tapir::Logger;
 
 sub is_valid_request {
-	my ($self, %opt) = @_;
+    my ($self, %opt) = @_;
 
-	return { };
+    return { };
 }
 
 # User specified arguments
@@ -31,73 +31,73 @@ has 'transports' => (is => 'ro', default => sub { [] });
 has 'logger'     => (is => 'ro', lazy_build => 1);
 
 sub add_handler {
-	my $self = shift;
-	my %opt = validate(@_, {
-		class => 1,
-	});
+    my $self = shift;
+    my %opt = validate(@_, {
+        class => 1,
+    });
 
-	eval "require $opt{class}";
-	if ($@) {
-		croak "Failed to load class $opt{class}: $@";
-	}
+    eval "require $opt{class}";
+    if ($@) {
+        croak "Failed to load class $opt{class}: $@";
+    }
 
-	my $service = $opt{class}->service;
-	if (! $service) {
-		croak "Class $opt{class} doesn't define a service";
-	}
+    my $service = $opt{class}->service;
+    if (! $service) {
+        croak "Class $opt{class} doesn't define a service";
+    }
 
-	my %methods = %{ $opt{class}->methods };
-	if (! %methods) {
-		croak "Class $opt{class} doesn't define any methods";
-	}
+    my %methods = %{ $opt{class}->methods };
+    if (! %methods) {
+        croak "Class $opt{class} doesn't define any methods";
+    }
 
-	push @{ $self->handlers }, {
-		class   => $opt{class},
-		service => $service,
-		methods => \%methods,
-	};
+    push @{ $self->handlers }, {
+        class   => $opt{class},
+        service => $service,
+        methods => \%methods,
+    };
 }
 
 sub add_transport {
-	my $self = shift;
-	my %opt = validate(@_, {
-		class   => 1,
-		options => { default => {} },
-	});
+    my $self = shift;
+    my %opt = validate(@_, {
+        class   => 1,
+        options => { default => {} },
+    });
 
-	eval "require $opt{class}";
-	if ($@) {
-		croak "Failed to load class $opt{class}: $@";
-	}
+    eval "require $opt{class}";
+    if ($@) {
+        croak "Failed to load class $opt{class}: $@";
+    }
 
-	my $transport;
-	try {
-		$transport = $opt{class}->new(
-			server => $self, 
-			logger => $self->logger,
-			%{ $opt{options} }
-		);
-		$transport->setup();
-	} catch {
-		croak "Failed to load class $opt{class}: $_";
-	};
+    my $transport;
+    try {
+        $transport = $opt{class}->new(
+            server => $self, 
+            logger => $self->logger,
+            %{ $opt{options} }
+        );
+        $transport->setup();
+    } catch {
+        croak "Failed to load class $opt{class}: $_";
+    };
 
-	push @{ $self->transports }, $transport;
+    push @{ $self->transports }, $transport;
 }
 
 sub run {
-	my $self = shift;
+    my $self = shift;
 
-	if (! int @{ $self->transports }) {
-		croak "Can't run() without any transports defined";
-	}
+    if (! int @{ $self->transports }) {
+        croak "Can't run() without any transports defined";
+    }
 
-	$_->run() foreach @{ $self->transports };
+    $_->run() foreach @{ $self->transports };
 }
 
 sub _build_logger {
-	my $self = shift;
-	return Tapir::Logger->new(screen => 1);
+    my $self = shift;
+    return Tapir::Logger->new(screen => 1);
 }
 
 1;

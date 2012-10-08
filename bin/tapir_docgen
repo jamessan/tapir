@@ -7,9 +7,9 @@ use Getopt::Long;
 use Tapir::Documentation::NaturalDocs;
 
 my %args = (
-	temp_dir    => $FindBin::Bin . '/../docs_tmp/',
-	output_dir  => $FindBin::Bin . '/../docs/',
-	debug       => $ENV{DEBUG},
+    temp_dir    => $FindBin::Bin . '/../docs_tmp/',
+    output_dir  => $FindBin::Bin . '/../docs/',
+    debug       => $ENV{DEBUG},
 );
 
 GetOptions(
@@ -22,11 +22,11 @@ GetOptions(
 );
 
 if (! $args{naturaldocs_bin}) {
-	$args{naturaldocs_bin} = `which NaturalDocs`;
-	chomp $args{naturaldocs_bin};
-	if (! $args{naturaldocs_bin}) {
-		die "You must pass --naturaldocs=... to indicate where the binary NaturalDocs is\n";
-	}
+    $args{naturaldocs_bin} = `which NaturalDocs`;
+    chomp $args{naturaldocs_bin};
+    if (! $args{naturaldocs_bin}) {
+        die "You must pass --naturaldocs=... to indicate where the binary NaturalDocs is\n";
+    }
 }
 
 Tapir::Documentation::NaturalDocs->build(%args);

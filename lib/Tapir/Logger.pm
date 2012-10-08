@@ -53,7 +53,7 @@ sub new {
         $logger->add_appender($appender);
     }
 
-	return $logger;
+    return $logger;
 }
 
 1;

@@ -13,182 +13,182 @@ my ($nd, %created_files, %args, $document);
 my $validator = Tapir::Validator->new();
 
 sub build {
-	my $class = shift;
-	%args = @_;
+    my $class = shift;
+    %args = @_;
 
-	die "Invalid thrift file" unless $args{input_fn} && -f $args{input_fn};
+    die "Invalid thrift file" unless $args{input_fn} && -f $args{input_fn};
 
-	$args{process_dir} ||= File::Spec->catdir($args{temp_dir}, 'process');
-	$args{project_dir} ||= File::Spec->catdir($args{temp_dir}, 'project');
+    $args{process_dir} ||= File::Spec->catdir($args{temp_dir}, 'process');
+    $args{project_dir} ||= File::Spec->catdir($args{temp_dir}, 'project');
 
-	foreach my $dir (map { $args{$_} } qw(process_dir project_dir output_dir)) {
-		next if -d $dir;
-		system 'mkdir', '-p', $dir;
-	}
+    foreach my $dir (map { $args{$_} } qw(process_dir project_dir output_dir)) {
+        next if -d $dir;
+        system 'mkdir', '-p', $dir;
+    }
 
-	## Read the document and audit it
+    ## Read the document and audit it
 
-	$document = Thrift::IDL->parse_thrift_file($args{input_fn}, $args{debug});
+    $document = Thrift::IDL->parse_thrift_file($args{input_fn}, $args{debug});
 
-	if (my @audit = $validator->audit_idl_document($document)) {
-		print "ERROR: File didn't pass consistency check:\n";
-		print "  * $_\n" foreach @audit;
-		exit 1;
-	}
+    if (my @audit = $validator->audit_idl_document($document)) {
+        print "ERROR: File didn't pass consistency check:\n";
+        print "  * $_\n" foreach @audit;
+        exit 1;
+    }
 
-	### Passed audit; start writing files
+    ### Passed audit; start writing files
 
-	my %used_types;
+    my %used_types;
 
-	## Generate ND for each service and method
+    ## Generate ND for each service and method
 
-	foreach my $service (@{ $document->services }) {
+    foreach my $service (@{ $document->services }) {
 
-		start_class('Service.' . $service->name);
+        start_class('Service.' . $service->name);
 
-		print $nd '' . ($service->{doc}{description} || '') . "\n\n";
+        print $nd '' . ($service->{doc}{description} || '') . "\n\n";
 
-		foreach my $method (@{ $service->methods }) {
+        foreach my $method (@{ $service->methods }) {
 
-			# Take note of all the named types that are referenced in this method
-			$used_types{$_->name}++ foreach
-				grep { $_->can('name') }
-				$validator->_audit_flatten_types($method);
+            # Take note of all the named types that are referenced in this method
+            $used_types{$_->name}++ foreach
+                grep { $_->can('name') }
+                $validator->_audit_flatten_types($method);
 
-			my $method_name = $method->name;
-			if (my $rest = $method->{doc}{rest}) {
-				$method_name = uc($rest->{method}) . ' ' .  $rest->{route};
-			}
+            my $method_name = $method->name;
+            if (my $rest = $method->{doc}{rest}) {
+                $method_name = uc($rest->{method}) . ' ' .  $rest->{route};
+            }
 
-			print $nd "Function: $method_name\n\n";
-			print $nd $method->{doc}{description} . "\n\n";
-			print $nd "\n";
+            print $nd "Function: $method_name\n\n";
+            print $nd $method->{doc}{description} . "\n\n";
+            print $nd "\n";
 
-			document_object_parameters($method, 'arguments');
-			print $nd "\n";
+            document_object_parameters($method, 'arguments');
+            print $nd "\n";
 
-			if (! $method->oneway) {
-				print $nd "Returns:\n\n";
-				print $nd "    " . nd_type_link($method->returns) . ($method->{doc}{return} ? '  ' . join('', @{ $method->{doc}{return} }) : '') . "\n";
-				print $nd "\n";
+            if (! $method->oneway) {
+                print $nd "Returns:\n\n";
+                print $nd "    " . nd_type_link($method->returns) . ($method->{doc}{return} ? '  ' . join('', @{ $method->{doc}{return} }) : '') . "\n";
+                print $nd "\n";
 
-				if (my @throws = @{ $method->throws }) {
-					print $nd "Throws:\n\n";
-					print $nd "    " . nd_type_link($_->type) . " (idx: " . $_->id . ")\n" foreach @throws;
-					print $nd "\n";
-				}
-			}
+                if (my @throws = @{ $method->throws }) {
+                    print $nd "Throws:\n\n";
+                    print $nd "    " . nd_type_link($_->type) . " (idx: " . $_->id . ")\n" foreach @throws;
+                    print $nd "\n";
+                }
+            }
 
-		}
-	}
+        }
+    }
 
-	## Generate ND for my custom types
+    ## Generate ND for my custom types
 
-	start_class('Thrift');
+    start_class('Thrift');
 
-	foreach my $type (qw(bool byte i16 i32 i64 double string binary slist void list map set)) {
-		print $nd "Type: $type\n\n";
-		print $nd "A Thrift built-in type.\n\n";
-	}
+    foreach my $type (qw(bool byte i16 i32 i64 double string binary slist void list map set)) {
+        print $nd "Type: $type\n\n";
+        print $nd "A Thrift built-in type.\n\n";
+    }
 
-	start_class('Types');
+    start_class('Types');
 
-	foreach my $type (
-		sort { $a->name cmp $b->name }
-		grep { defined $used_types{$_->name} }
-		grep {
-			$_->isa('Thrift::IDL::TypeDef')
-			|| $_->isa('Thrift::IDL::Enum')
-			|| $_->isa('Thrift::IDL::Constant')
-			|| ($_->isa('Thrift::IDL::Struct') && ! $_->isa('Thrift::IDL::Exception'))
-		}
-		values %{ $validator->{custom_types} }
-	) {
-		print $nd "Type: ".$type->name."\n\n";
+    foreach my $type (
+        sort { $a->name cmp $b->name }
+        grep { defined $used_types{$_->name} }
+        grep {
+            $_->isa('Thrift::IDL::TypeDef')
+            || $_->isa('Thrift::IDL::Enum')
+            || $_->isa('Thrift::IDL::Constant')
+            || ($_->isa('Thrift::IDL::Struct') && ! $_->isa('Thrift::IDL::Exception'))
+        }
+        values %{ $validator->{custom_types} }
+    ) {
+        print $nd "Type: ".$type->name."\n\n";
 
-		if (! $type->{doc}) {
-			foreach my $comment (@{ $type->comments }) {
-				print $nd $comment->escaped_value . "\n\n";
-			}
-		}
+        if (! $type->{doc}) {
+            foreach my $comment (@{ $type->comments }) {
+                print $nd $comment->escaped_value . "\n\n";
+            }
+        }
 
-		if ($type->{doc}{validators}) {
-			my @parts = map { $_->documentation } @{ $type->{doc}{validators} };
-			print $nd join (". ", @parts) . "\n\n";
-		}
+        if ($type->{doc}{validators}) {
+            my @parts = map { $_->documentation } @{ $type->{doc}{validators} };
+            print $nd join (". ", @parts) . "\n\n";
+        }
 
-		if ($type->isa('Thrift::IDL::TypeDef')) {
-			print $nd "Base type " . nd_type_link($type->type)."\n";
-		}
-		elsif ($type->isa('Thrift::IDL::Enum')) {
-			print $nd "Enumerated type of named values:\n";
+        if ($type->isa('Thrift::IDL::TypeDef')) {
+            print $nd "Base type " . nd_type_link($type->type)."\n";
+        }
+        elsif ($type->isa('Thrift::IDL::Enum')) {
+            print $nd "Enumerated type of named values:\n";
 
-			foreach my $value_pair (@{ $type->numbered_values }) {
-				print $nd " - " . $value_pair->[0] . " (" . $value_pair->[1] . ")\n";
-			}
-		}
-		elsif ($type->isa('Thrift::IDL::Constant')) {
-			die;
-		}
-		elsif ($type->isa('Thrift::IDL::Struct')) {
-			print $nd $type->{doc}{description} . "\n\n" if $type->{doc}{description};
+            foreach my $value_pair (@{ $type->numbered_values }) {
+                print $nd " - " . $value_pair->[0] . " (" . $value_pair->[1] . ")\n";
+            }
+        }
+        elsif ($type->isa('Thrift::IDL::Constant')) {
+            die;
+        }
+        elsif ($type->isa('Thrift::IDL::Struct')) {
+            print $nd $type->{doc}{description} . "\n\n" if $type->{doc}{description};
 
-			document_object_parameters($type, 'fields');
-		}
+            document_object_parameters($type, 'fields');
+        }
 
-		print $nd "\n";
-	}
+        print $nd "\n";
+    }
 
-	print $nd "Class: Exceptions\n\n";
+    print $nd "Class: Exceptions\n\n";
 
-	foreach my $exception (
-		sort { $a->name cmp $b->name }
-		grep { defined $used_types{$_->name} }
-		grep { $_->isa('Thrift::IDL::Exception') }
-		values %{ $validator->{custom_types} }
-	) {
-		print $nd "Type: ".$exception->name."\n\n";
+    foreach my $exception (
+        sort { $a->name cmp $b->name }
+        grep { defined $used_types{$_->name} }
+        grep { $_->isa('Thrift::IDL::Exception') }
+        values %{ $validator->{custom_types} }
+    ) {
+        print $nd "Type: ".$exception->name."\n\n";
 
-		print $nd $exception->{doc}{description} . "\n\n" if $exception->{doc}{description};
+        print $nd $exception->{doc}{description} . "\n\n" if $exception->{doc}{description};
 
-		document_object_parameters($exception, 'fields');
+        document_object_parameters($exception, 'fields');
 
-		print $nd "\n";
-	}
+        print $nd "\n";
+    }
 
-	close $nd;
+    close $nd;
 
-	## Run NaturalDocs on the process directoy
+    ## Run NaturalDocs on the process directoy
 
-	if ($args{static_dir} && -d $args{static_dir}) {
-		foreach my $file (glob "$args{static_dir}/*") {
-			my ($local) = $file =~ m{^$args{static_dir}/(.+)$};
-			my $dest_file = $args{process_dir} . '/' . $local;
-			my ($dest_dir) = $dest_file =~ m{^(.+?)/[^/]+$};
-			-d $dest_dir || mkpath($dest_dir);
-			copy($file, $dest_file);
-			$created_files{$local}++;
-		}
-	}
+    if ($args{static_dir} && -d $args{static_dir}) {
+        foreach my $file (glob "$args{static_dir}/*") {
+            my ($local) = $file =~ m{^$args{static_dir}/(.+)$};
+            my $dest_file = $args{process_dir} . '/' . $local;
+            my ($dest_dir) = $dest_file =~ m{^(.+?)/[^/]+$};
+            -d $dest_dir || mkpath($dest_dir);
+            copy($file, $dest_file);
+            $created_files{$local}++;
+        }
+    }
 
-	# Delete any files found in the process directory that I didn't create during this session
-	foreach my $process_file (glob "$args{process_dir}/*") {
-		my ($local) = $process_file =~ m{^$args{process_dir}/(.+)$};
-		next if $created_files{$local};
-		unlink $process_file;
-	}
+    # Delete any files found in the process directory that I didn't create during this session
+    foreach my $process_file (glob "$args{process_dir}/*") {
+        my ($local) = $process_file =~ m{^$args{process_dir}/(.+)$};
+        next if $created_files{$local};
+        unlink $process_file;
+    }
 
-	unless ($args{prepare_only}) {
-		my @cmd = ($args{naturaldocs_bin},
-			'-i' => $args{process_dir},
-			'-o' => 'HTML' => $args{output_dir},
-			'-p' => $args{project_dir});
-		my $cmd = join ' ', @cmd;
-		# If NaturalDocs is installed on the system, and if we're using a local::lib and perlbrew,
-		# we may have incompatible XS libs in our path that NaturalDocs doesn't like.  This seems
-		# like such an edge case, but it's relevant for the author
-		system "PERL5LIB= $cmd";
-	}
+    unless ($args{prepare_only}) {
+        my @cmd = ($args{naturaldocs_bin},
+            '-i' => $args{process_dir},
+            '-o' => 'HTML' => $args{output_dir},
+            '-p' => $args{project_dir});
+        my $cmd = join ' ', @cmd;
+        # If NaturalDocs is installed on the system, and if we're using a local::lib and perlbrew,
+        # we may have incompatible XS libs in our path that NaturalDocs doesn't like.  This seems
+        # like such an edge case, but it's relevant for the author
+        system "PERL5LIB= $cmd";
+    }
 
 }
 
@@ -202,25 +202,25 @@ sub document_object_parameters {
 
     print $nd "Parameters:\n\n";
     foreach my $field (@fields) {
-		my @docs = (
-			map { ($_ eq 'id' ? 'idx' : $_) . ': ' . ($_ eq 'type' ? nd_type_link($field->$_) : $field->$_) }
-			grep { defined $field->$_ }
-			qw(id type optional default_value)
-		);
-		my $doc_string = $object->{doc}{param}{ $field->name } || '';
+        my @docs = (
+            map { ($_ eq 'id' ? 'idx' : $_) . ': ' . ($_ eq 'type' ? nd_type_link($field->$_) : $field->$_) }
+            grep { defined $field->$_ }
+            qw(id type optional default_value)
+        );
+        my $doc_string = $object->{doc}{param}{ $field->name } || '';
 
-		my $doc = $validator->doc_from_idl_object($document, $field);
-		if ($doc->{validators}) {
-			$doc_string .= '. ' unless ! length $doc_string || $doc_string =~ m/\.\s*$/;
-			$doc_string .= join '. ', map { $_->documentation } @{ $doc->{validators} };
-		}
+        my $doc = $validator->doc_from_idl_object($document, $field);
+        if ($doc->{validators}) {
+            $doc_string .= '. ' unless ! length $doc_string || $doc_string =~ m/\.\s*$/;
+            $doc_string .= join '. ', map { $_->documentation } @{ $doc->{validators} };
+        }
 
         printf $nd "    %s - %s (%s)\n",
             $field->name,
-			($doc_string || 'no docs'),
+            ($doc_string || 'no docs'),
             join(', ', @docs);
     }
-	#print $nd "\n";
+    #print $nd "\n";
 }
 
 sub start_class {
