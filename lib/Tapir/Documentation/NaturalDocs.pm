@@ -179,10 +179,15 @@ sub build {
 	}
 
 	unless ($args{prepare_only}) {
-		system $args{naturaldocs_bin},
+		my @cmd = ($args{naturaldocs_bin},
 			'-i' => $args{process_dir},
-			'-o' => 'HTML' => $args{output_dir}, 
-			'-p' => $args{project_dir};
+			'-o' => 'HTML' => $args{output_dir},
+			'-p' => $args{project_dir});
+		my $cmd = join ' ', @cmd;
+		# If NaturalDocs is installed on the system, and if we're using a local::lib and perlbrew,
+		# we may have incompatible XS libs in our path that NaturalDocs doesn't like.  This seems
+		# like such an edge case, but it's relevant for the author
+		system "PERL5LIB= $cmd";
 	}
 
 }

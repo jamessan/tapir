@@ -193,6 +193,8 @@ sub _audit_parse_structured_comment {
 			}
 
 			my $value = shift @parts;
+			next unless defined $value && length $value;
+
 			$value =~ s/^\s+//;
 			if ($javadoc_key eq 'param') {
 				my ($param, $description) = $value =~ m{^(\w+) \s* (.*)$}x;
