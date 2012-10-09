@@ -33,6 +33,8 @@ dojo.declare('Tapir', null, {
 
     pendingRequests: {},
 
+    services: [],
+
     // Methods
 
     namedTypeObject: function (param) {
@@ -55,10 +57,20 @@ dojo.declare('Tapir', null, {
             }
             obj = new Tapir.Type[name] (param);
         }
+        else if (name.match(/\./)) {
+            eval ('obj = new ' + name + '()');
+        }
         else {
+            if (! Tapir[name]) {
+                throw "No Tapir." + name + " class found";
+            }
             obj = new Tapir[name] (param);
         }
         return obj;
+    },
+
+    service: function (name) {
+        return this.namedTypeObject(name);
     },
 
     pollPendingResults: function (request) {

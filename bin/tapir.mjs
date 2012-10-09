@@ -2,9 +2,9 @@
 %# This is here for vim syntax highlighting
 <script>
 % }
-(function () {
+require(["dojo/_base/array"], function (array) {
 
-var _methods, i, fieldHeader = ['index', 'name', 'optional', 'type', 'validateSpec'], _types_custom;
+var fieldHeader = ['index', 'name', 'optional', 'type', 'validateSpec'];
 
 // Custom types
 
@@ -33,7 +33,7 @@ foreach my $type (
 
     my %details = (
         name => $type->name,
-        type => describe_type($type->type, 1),
+        type => describe_type($type->type, $namespace, 1),
     );
 
     my $spec = describe_validateSpec($type);
@@ -76,10 +76,12 @@ dojo.declare('<% $namespace %>.<% $type->name %>', Tapir.Type.Custom, {
 \
 % } # foreach type
 
-_types_custom = _table2objects(<% $jsonxs->encode(\@type_custom_declare) %>);
-for (i = 0; i < _types_custom.length; i++) {
-    dojo.declare('<% $namespace %>.' + _types_custom[i].name, Tapir.Type.Custom, _types_custom[i]);
-}
+array.forEach(
+    _table2objects(<% $jsonxs->encode(\@type_custom_declare) %>),
+    function (type, i) {
+        dojo.declare('<% $namespace %>.' + type.name, Tapir.Type.Custom, type);
+    }
+);
 
 // Custom Enum
 
@@ -108,7 +110,7 @@ foreach my $type (
 </%perl>
 \
 dojo.declare('<% $namespace %>.<% $type->name %>', Tapir.Type.<% $type->isa('Thrift::IDL::Exception') ? 'Exception' : 'Struct' %>, {
-    fieldSpec: <% describe_fields($type->fields) %>
+    fieldSpec: <% describe_fields($type->fields, $namespace) %>
 });
 \
 % } # foreach type
@@ -123,6 +125,8 @@ dojo.declare('<% $namespace %>.<% $service->name %>', Tapir.Service, {
     methods: [ <% join ', ', map { '"' . $_->name . '"' } @{ $methods{ $service->name } } %> ],
     baseName: '<% $namespace %>.<% $service->name %>'
 });
+
+TapirClient.services.push('<% $namespace %>.<% $service->name %>');
 \
 <%doc>
 dojo.declare('<% $namespace %>.<% $service->name %>.<% $method->name %>', Tapir.Method, {
@@ -141,10 +145,10 @@ dojo.declare('<% $namespace %>.<% $service->name %>.<% $method->name %>', Tapir.
         push @method_declare, [
             $method->name,
             $service->name,
-            describe_fields($method->arguments, 1, 1),
+            describe_fields($method->arguments, $namespace, 1, 1),
             {
-                exceptions => describe_fields($method->throws, 1, 1),
-                returns    => describe_type($method->returns, 1)
+                exceptions => describe_fields($method->throws, $namespace, 1, 1),
+                returns    => describe_type($method->returns, $namespace, 1)
             }
         ];
     }
@@ -152,14 +156,17 @@ dojo.declare('<% $namespace %>.<% $service->name %>.<% $method->name %>', Tapir.
 \
 % } # foreach service
 
-_methods = _table2objects(<% $jsonxs->encode(\@method_declare) %>);
-for (i = 0; i < _methods.length; i++) {
-    _methods[i].fieldSpec       = _table2objects(_methods[i].fieldSpec, fieldHeader);
-    _methods[i].spec.exceptions = _table2objects(_methods[i].spec.exceptions, fieldHeader);
-    dojo.declare('<% $namespace %>.' + _methods[i].serviceName + '.' + _methods[i].name, Tapir.Method, _methods[i]);
-}
+array.forEach(
+    _table2objects(<% $jsonxs->encode(\@method_declare) %>),
 
-})();
+    function (method, i) {
+        method.fieldSpec       = _table2objects(method.fieldSpec, fieldHeader);
+        method.spec.exceptions = _table2objects(method.spec.exceptions, fieldHeader);
+        dojo.declare('<% $namespace %>.' + method.serviceName + '.' + method.name, Tapir.Method, method);
+    }
+);
+
+});
 % if (0) {
 </script>
 % }
@@ -186,25 +193,27 @@ foreach my $service (@{ $document->services }) {
 }
 
 sub describe_type {
-    my ($type, $want_perl) = @_;
+    my ($type, $namespace, $want_perl) = @_;
+
+    my $namespaced_type = $type->isa('Thrift::IDL::Type::Base') ? $type->name : join '.', $namespace, $type->name;
 
     if ($type->can('val_type')) {
         my %details = (
-            type => $type->name,
-            valType => describe_type($type->val_type, 1),
+            type => $namespaced_type,
+            valType => describe_type($type->val_type, $namespace, 1),
         );
         if ($type->can('key_type')) {
-            $details{keyType} = describe_type($type->key_type, 1);
+            $details{keyType} = describe_type($type->key_type, $namespace, 1);
         }
 
         return $want_perl ? \%details : $jsonxs->encode(\%details);
     }
 
-    return $want_perl ? $type->name : "'" . $type->name . "'";
+    return $want_perl ? $namespaced_type : "'" . $namespaced_type . "'";
 }
 
 sub describe_fields {
-    my ($fields, $want_perl, $no_header) = @_;
+    my ($fields, $namespace, $want_perl, $no_header) = @_;
 
     my @output = (
         ($no_header ? () : (
@@ -220,7 +229,7 @@ sub describe_fields {
             $field->id,
             $field->name,
             ($optional ? JSON::XS::true : JSON::XS::false),
-            describe_type($field->type, 1),
+            describe_type($field->type, $namespace, 1),
             describe_validateSpec($field)
         ];
     }

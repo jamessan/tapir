@@ -1,6 +1,6 @@
-(function () {
+require(["dojo/_base/array"], function (array) {
 
-var _methods, i, fieldHeader = ['index', 'name', 'optional', 'type', 'validateSpec'], _types_custom;
+var fieldHeader = ['index', 'name', 'optional', 'type', 'validateSpec'];
 
 // Custom types
 
@@ -20,7 +20,8 @@ function _table2objects (data, columns) {
 }
 
 
-_types_custom = _table2objects([
+array.forEach(
+    _table2objects([
    [
       "name",
       "type",
@@ -59,10 +60,11 @@ _types_custom = _table2objects([
       ]
    ]
 ]
+),
+    function (type, i) {
+        dojo.declare('Tappy.' + type.name, Tapir.Type.Custom, type);
+    }
 );
-for (i = 0; i < _types_custom.length; i++) {
-    dojo.declare('Tappy.' + _types_custom[i].name, Tapir.Type.Custom, _types_custom[i]);
-}
 
 // Custom Enum
 
@@ -82,7 +84,7 @@ dojo.declare('Tappy.account', Tapir.Type.Struct, {
       "1",
       "id",
       false,
-      "account_id",
+      "Tappy.account_id",
       []
    ],
    [
@@ -163,7 +165,10 @@ dojo.declare('Tappy.Accounts', Tapir.Service, {
     baseName: 'Tappy.Accounts'
 });
 
-_methods = _table2objects([
+TapirClient.services.push('Tappy.Accounts');
+
+array.forEach(
+    _table2objects([
    [
       "name",
       "serviceName",
@@ -178,14 +183,14 @@ _methods = _table2objects([
             "1",
             "username",
             false,
-            "username",
+            "Tappy.username",
             []
          ],
          [
             "2",
             "password",
             false,
-            "password",
+            "Tappy.password",
             [
                {
                   "high" : null,
@@ -208,18 +213,18 @@ _methods = _table2objects([
                "1",
                "insufficient",
                false,
-               "insufficientResources",
+               "Tappy.insufficientResources",
                []
             ],
             [
                "2",
                "code",
                false,
-               "genericCode",
+               "Tappy.genericCode",
                []
             ]
          ],
-         "returns" : "account"
+         "returns" : "Tappy.account"
       }
    ],
    [
@@ -230,7 +235,7 @@ _methods = _table2objects([
             "1",
             "username",
             false,
-            "username",
+            "Tappy.username",
             []
          ]
       ],
@@ -240,22 +245,24 @@ _methods = _table2objects([
                "1",
                "code",
                false,
-               "genericCode",
+               "Tappy.genericCode",
                []
             ]
          ],
-         "returns" : "account"
+         "returns" : "Tappy.account"
       }
    ]
 ]
-);
-for (i = 0; i < _methods.length; i++) {
-    _methods[i].fieldSpec       = _table2objects(_methods[i].fieldSpec, fieldHeader);
-    _methods[i].spec.exceptions = _table2objects(_methods[i].spec.exceptions, fieldHeader);
-    dojo.declare('Tappy.' + _methods[i].serviceName + '.' + _methods[i].name, Tapir.Method, _methods[i]);
-}
+),
 
-})();
+    function (method, i) {
+        method.fieldSpec       = _table2objects(method.fieldSpec, fieldHeader);
+        method.spec.exceptions = _table2objects(method.spec.exceptions, fieldHeader);
+        dojo.declare('Tappy.' + method.serviceName + '.' + method.name, Tapir.Method, method);
+    }
+);
+
+});
 
 
 
