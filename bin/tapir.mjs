@@ -195,7 +195,7 @@ foreach my $service (@{ $document->services }) {
 sub describe_type {
     my ($type, $namespace, $want_perl) = @_;
 
-    my $namespaced_type = $type->isa('Thrift::IDL::Type::Base') ? $type->name : join '.', $namespace, $type->name;
+    my $namespaced_type = $type->isa('Thrift::IDL::Type::Custom') ? join '.', $namespace, $type->name : $type->name;
 
     if ($type->can('val_type')) {
         my %details = (

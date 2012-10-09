@@ -10,7 +10,7 @@
             var $j = jQuery.noConflict();
         </script>
         <style>
-            td.methodFieldError {
+            .fieldError {
                 color: red;
             }
             #methodResults {
@@ -27,21 +27,28 @@
             #methodResults .success {
                 border: 1px solid green;
             }
-            .methodFieldName .name {
+            .fieldName .name {
                 font-weight: bold;
                 text-align: right;
                 font-size: 18px;
             }
-            .methodFieldName .meta {
+            .fieldName .meta {
                 font-size: 12px;
                 color: #999;
             }
-            .methodFieldValue {
+            .fieldName, .fieldValue, .containerItem > td {
                 vertical-align: top;
             }
-            .methodFieldValue input {
+            .fieldValue input {
                 border: 1px solid #aaa;
                 padding: 5px;
+            }
+            .container {
+                border: 1px solid black;
+                background-color: white;
+            }
+            .containerItem > td {
+                background-color: #eef;
             }
         </style>
     </head>
@@ -133,16 +140,16 @@
 
             var div = table.appendChild($$('tr', { class: 'methodField' }));
             div.appendChild(
-                $$('td', { class: 'methodFieldName' }, [
+                $$('td', { class: 'fieldName' }, [
                     $$('div', { class: 'name' }, [_(Field.name)]),
                     $$('div', { class: 'meta' }, [_('idx: ' + Field.index + ', type: ' + Field.type + ', opt: ' + Field.optional)])
                 ])
             );
             var valueDiv = div.appendChild(
-                $$('td', { class: 'methodFieldValue' })
+                $$('td', { class: 'fieldValue' })
             );
             var errorDiv = div.appendChild(
-                $$('td', { class: 'methodFieldError', id: fieldId + '_error' })
+                $$('td', { class: 'fieldError', id: fieldId + '_error' })
             );
 
             var collectorFunc = drawMethodField(Field, fieldId, valueDiv, defaultValues);
@@ -164,7 +171,6 @@
     }
 
     function drawMethodField (Field, fieldId, parentDiv, defaultValues) {
-
         var baseType = Field.Type().baseType();
         var classChain = baseType.classChainHash();
         var collectorFunc = null;
@@ -204,13 +210,14 @@
                 var subFieldId = fieldId + '_' + i;
 
                 var tr = subDiv.appendChild(
-                    $$('tr', {}, [
-                        $$('td', {}, [_(
-                            subField.name + ' (idx: ' + subField.index + ', type: ' + subField.type + ', opt: ' + subField.optional + ')'
-                        )]),
+                    $$('tr', { class: 'structField' }, [
+                        $$('td', { class: 'fieldName' }, [
+                            $$('div', { class: 'name' }, [_(subField.name)]),
+                            $$('div', { class: 'meta' }, [_('idx: ' + subField.index + ', type: ' + subField.type + ', opt: ' + subField.optional)])
+                        ]),
                     ])
                 );
-                var td = tr.appendChild($$('td'));
+                var td = tr.appendChild($$('td', { class: 'fieldValue' }));
 
                 var collectorFunc = drawMethodField(subField, subFieldId, td, {});
                 if (collectorFunc == null) continue;
@@ -234,7 +241,7 @@
             if (defaultValues[ Field.name ]) input.checked = true;
         }
         else if (classChain['Tapir.Type.Container']) {
-            var subDiv = $$('table', { id: fieldId });
+            var subDiv = $$('table', { class: 'container', id: fieldId });
             parentDiv.appendChild(subDiv);
 
             var is_map = classChain['Tapir.Type.map'] ? true : false;
@@ -259,22 +266,22 @@
             var addFunc = function () {
                 var tr, td, rowId, collectorFunc;
 
-                tr = subDiv.appendChild($$('tr'));
+                tr = subDiv.appendChild($$('tr', { class: 'containerItem' }));
                 rowId = rowCounter++;
 
                 collectorFuncs[rowId] = {};
 
                 if (is_map) {
-                    td = tr.appendChild($$('td', {}, [_('Key:')]));
+                    td = tr.appendChild($$('td', { class: 'key' }));
                     collectorFunc = drawMethodField(keyField, fieldId + '_' + rowId + '_key', td, {});
                     if (collectorFunc != null) collectorFuncs[rowId]['key'] = collectorFunc;
                 }
 
-                td = tr.appendChild($$('td', {}, [_('Value:')]));
+                td = tr.appendChild($$('td', { class: 'value' }));
                 collectorFunc = drawMethodField(valField, fieldId + '_' + rowId + '_val', td, {});
                 if (collectorFunc != null) collectorFuncs[rowId]['val'] = collectorFunc;
 
-                td = tr.appendChild($$('td'));
+                td = tr.appendChild($$('td', { class: 'deleteItem'}));
                 td.appendChild($$('button', {}, [_('Del')]))
                     .addEventListenerChained('click', function (e) {
                         delete collectorFuncs[rowId];
@@ -282,8 +289,14 @@
                     });
             };
 
-            var controlTd = $$('td');
-            parentDiv.appendChild($$('tr', {}, [controlTd]));
+            var controlTd = $$('td', { colspan: is_map ? 3 : 2 });
+            subDiv.appendChild($$('tr', { class: 'containerControl' }, [controlTd]));
+
+            var header = $$('tr', { class: 'containerHeader' });
+            if (is_map)
+                header.appendChild($$('td', {}, [_('Key (isa ...)')]));
+            header.appendChild($$('td', {}, [_('Value (isa ...)')]));
+            subDiv.appendChild(header);
 
             controlTd.appendChild($$('button', {}, [_('Add')]))
                 .addEventListenerChained('click', function (e) {

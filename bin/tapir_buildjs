@@ -8,6 +8,7 @@ use Thrift::IDL;
 use Tapir::Validator;
 use HTML::Mason;
 use FindBin;
+use List::Util qw(first);
 
 my %opt;
 
@@ -22,7 +23,7 @@ if (my @missing_args = grep { ! $opt{$_} } qw(idl out)) {
 
 my $document = Thrift::IDL->parse_thrift_file($opt{idl});
 my $validator = Tapir::Validator->new();
-my $namespace = $document->headers->[0]->namespace('js');
+my $namespace = first { defined } map { $document->headers->[0]->namespace($_) } qw(js * perl);
 
 my @audit_errors = $validator->audit_idl_document($document);
 die "IDL file failed audit\n" if @audit_errors;
