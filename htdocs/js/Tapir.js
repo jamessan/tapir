@@ -61,10 +61,6 @@ dojo.declare('Tapir', null, {
         return obj;
     },
 
-    service: function (name) {
-        return this.namedTypeObject(name);
-    },
-
     pollPendingResults: function (request) {
         var self = this,
             wrappedOnSuccess = request.onSuccess,
@@ -669,8 +665,7 @@ dojo.declare('Tapir.Service', null, {
             if (this.methods[i] !== name) {
                 continue;
             }
-            obj = new Tapir[ this.name ][ name ] ();
-            //eval ('obj = new ' + this.baseName + '.' + name + '()');
+            eval ('obj = new ' + this.baseName + '.' + name + '()');
             return obj;
         }
         console.error("Method '" + name + "' not found in service");

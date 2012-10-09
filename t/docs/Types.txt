@@ -8,6 +8,7 @@ Parameters:
 
     id - Must be between 1 and 10000 (idx: 1, type: <Types.account_id>)
     allocation - no docs (idx: 2, type: <Thrift.i32>)
+    is_admin - no docs (idx: 3, type: <Thrift.bool>, optional: 1)
 
 Type: account_id
 

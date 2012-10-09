@@ -1,4 +1,5 @@
 namespace perl Tappy
+namespace js Tappy
 
 // @validate range 1-10000
 typedef i32 account_id
@@ -14,7 +15,8 @@ typedef string password
 */
 struct account {
     1: account_id id,
-    2: i32        allocation
+    2: i32        allocation,
+    3: optional bool is_admin,
 }
 
 exception insufficientResources {
@@ -49,7 +51,8 @@ service Accounts {
     */
     account createAccount (
         1: username username, # The username
-        2: password password  # The account password @validate length 1-
+        2: password password, # The account password @validate length 1-
+        3: bool is_admin,     # @optional
     )
     throws (
         1: insufficientResources insufficient,

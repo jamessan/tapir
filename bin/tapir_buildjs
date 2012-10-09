@@ -22,6 +22,8 @@ if (my @missing_args = grep { ! $opt{$_} } qw(idl out)) {
 
 my $document = Thrift::IDL->parse_thrift_file($opt{idl});
 my $validator = Tapir::Validator->new();
+my $namespace = $document->headers->[0]->namespace('js');
+
 my @audit_errors = $validator->audit_idl_document($document);
 die "IDL file failed audit\n" if @audit_errors;
 
@@ -40,6 +42,7 @@ my $comp = $interp->make_component( comp_file => $FindBin::Bin . '/tapir.mjs' );
 
 my $return_value = $interp->exec(
     $comp,
+    namespace => $namespace,
     document => $document,
     types => $validator->{custom_types},
 );

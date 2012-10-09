@@ -31,10 +31,8 @@ sub new {
     }
     $self{docs}{flags} ||= {
         # List the '@' keys that are flags and will have no value following them
-        flags => {
-            optional => 1,
-            utf8     => 1,
-        },
+        optional => 1,
+        utf8     => 1,
     };
     return bless \%self, $class;
 }

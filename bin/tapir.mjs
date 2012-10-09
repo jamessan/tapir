@@ -2,6 +2,7 @@
 %# This is here for vim syntax highlighting
 <script>
 % }
+(function () {
 
 var _methods, i, fieldHeader = ['index', 'name', 'optional', 'type', 'validateSpec'], _types_custom;
 
@@ -158,6 +159,7 @@ for (i = 0; i < _methods.length; i++) {
     dojo.declare('<% $namespace %>.' + _methods[i].serviceName + '.' + _methods[i].name, Tapir.Method, _methods[i]);
 }
 
+})();
 % if (0) {
 </script>
 % }
@@ -169,6 +171,7 @@ my $jsonxs = JSON::XS->new->ascii->pretty(1)->allow_nonref;
 
 <%args>
 $document
+$namespace
 %types
 </%args>
 
