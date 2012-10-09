@@ -245,6 +245,7 @@
             parentDiv.appendChild(subDiv);
 
             var is_map = classChain['Tapir.Type.map'] ? true : false;
+            var containerType = classChain['Tapir.Type.map'] ? 'map' : classChain['Tapir.Type.set'] ? 'set' : 'list';
 
             var keyField = is_map ? new Tapir.Type.Field ({
                 name: 'key',
@@ -289,13 +290,13 @@
                     });
             };
 
-            var controlTd = $$('td', { colspan: is_map ? 3 : 2 });
+            var controlTd = $$('td', { colspan: is_map ? 3 : 2 }, [_(containerType)]);
             subDiv.appendChild($$('tr', { class: 'containerControl' }, [controlTd]));
 
             var header = $$('tr', { class: 'containerHeader' });
             if (is_map)
-                header.appendChild($$('td', {}, [_('Key (isa ...)')]));
-            header.appendChild($$('td', {}, [_('Value (isa ...)')]));
+                header.appendChild($$('td', {}, [_(baseType.keyType)]));
+            header.appendChild($$('td', {}, [_(baseType.valType)]));
             subDiv.appendChild(header);
 
             controlTd.appendChild($$('button', {}, [_('Add')]))
