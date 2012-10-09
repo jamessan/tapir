@@ -202,14 +202,26 @@ sub document_object_parameters {
 
     print $nd "Parameters:\n\n";
     foreach my $field (@fields) {
-        my @docs = (
-            map { ($_ eq 'id' ? 'idx' : $_) . ': ' . ($_ eq 'type' ? nd_type_link($field->$_) : $field->$_) }
+        my $doc = $validator->doc_from_idl_object($document, $field);
+
+        my @attr_keys = qw(id type optional default_value);
+
+        my %attr =
+            map { $_ => $field->$_ }
             grep { defined $field->$_ }
-            qw(id type optional default_value)
-        );
+            @attr_keys;
+
+        if ($doc->{optional}) {
+            $attr{optional} = 1;
+        }
+
+        my @attr =
+            map { ($_ eq 'id' ? 'idx' : $_) . ': ' . ($_ eq 'type' ? nd_type_link($attr{$_}) : $attr{$_}) }
+            grep { defined $attr{$_} }
+            @attr_keys;
+
         my $doc_string = $object->{doc}{param}{ $field->name } || '';
 
-        my $doc = $validator->doc_from_idl_object($document, $field);
         if ($doc->{validators}) {
             $doc_string .= '. ' unless ! length $doc_string || $doc_string =~ m/\.\s*$/;
             $doc_string .= join '. ', map { $_->documentation } @{ $doc->{validators} };
@@ -218,7 +230,7 @@ sub document_object_parameters {
         printf $nd "    %s - %s (%s)\n",
             $field->name,
             ($doc_string || 'no docs'),
-            join(', ', @docs);
+            join(', ', @attr);
     }
     #print $nd "\n";
 }
