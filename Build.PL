@@ -14,7 +14,7 @@ my $build = Module::Build->new(
         'Test::File::Contents' => 0,
     },
     requires => {
-        'Thrift::Parser' => 0,
+        'Thrift::Parser' => '0.06',
         'POE::Component::Sequence' => '0.02',
         'Moose' => 0,
         'Devel::Declare' => 0,
