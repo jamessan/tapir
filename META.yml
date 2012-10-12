@@ -19,6 +19,9 @@ provides:
   Tapir:
     file: lib/Tapir.pm
     version: 0.03
+  Tapir::Documentation::JSONSpec:
+    file: lib/Tapir/Documentation/JSONSpec.pm
+    version: 0
   Tapir::Documentation::NaturalDocs:
     file: lib/Tapir/Documentation/NaturalDocs.pm
     version: 0

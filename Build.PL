@@ -34,5 +34,8 @@ my $build = Module::Build->new(
     },
 );
 
+$build->add_build_element('js');
+$build->add_build_element('html');
+
 $build->create_build_script;
 

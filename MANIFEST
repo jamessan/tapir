@@ -1,13 +1,13 @@
-bin/tapir.mjs
 bin/tapir_audit
 bin/tapir_buildjs
 bin/tapir_docgen
 Build.PL
-htdocs/api_test.html
-htdocs/js/Tapir.js
-htdocs/js/Tappy.js
-htdocs/js/utils.js
+Changes
 lib/Tapir.pm
+lib/Tapir/_htdocs/index.html
+lib/Tapir/_htdocs/js/Tapir.js
+lib/Tapir/_htdocs/js/utils.js
+lib/Tapir/Documentation/JSONSpec.pm
 lib/Tapir/Documentation/NaturalDocs.pm
 lib/Tapir/Exceptions.pm
 lib/Tapir/Logger.pm
@@ -23,11 +23,11 @@ lib/Tapir/Validator/Range.pm
 lib/Tapir/Validator/Regex.pm
 Makefile.PL
 MANIFEST			This list of files
+MANIFEST.bak
 MANIFEST.SKIP
 META.json
 META.yml
 README
-Changes
 t/001_handler_plain.t
 t/002_handler_signatures.t
 t/003_methodcall.t
@@ -39,3 +39,4 @@ t/docs/Service.Accounts.txt
 t/docs/Thrift.txt
 t/docs/Types.txt
 t/thrift/example.thrift
+test.pl
