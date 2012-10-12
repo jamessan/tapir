@@ -9,6 +9,10 @@ DESCRIPTION
     is asynchronous but can be called in a synchronous environment so long
     as your method implementation doesn't use asynchronous logic.
 
+LICENSE
+    This library is free software; you may redistribute it and/or modify it
+    under the same terms as Perl itself
+
 COPYRIGHT
     Copyright (c) 2012 Eric Waters. All rights reserved. This program is
     free software; you can redistribute it and/or modify it under the same

@@ -9,7 +9,7 @@ build_requires:
 configure_requires:
   Module::Build: 0.4
 dynamic_config: 1
-generated_by: 'Module::Build version 0.4, CPAN::Meta::Converter version 2.120630'
+generated_by: 'Module::Build version 0.4003, CPAN::Meta::Converter version 2.120921'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -59,11 +59,16 @@ provides:
     file: lib/Tapir/Validator/Regex.pm
     version: 0
 requires:
+  Class::Accessor::Grouped: 0
   Devel::Declare: 0
   File::Spec: 0
+  Log::Log4perl: 0
   Moose: 0
   POE::Component::Sequence: 0.02
+  Params::Validate: 0
   Thrift::Parser: 0.06
+  Try::Tiny: 0
+  perl: 5.008
 resources:
   bugtracker: http://github.com/ewaters/tapir/issues?labels=bug
   license: http://dev.perl.org/licenses/

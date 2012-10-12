@@ -27,6 +27,7 @@ MANIFEST.SKIP
 META.json
 META.yml
 README
+Changes
 t/001_handler_plain.t
 t/002_handler_signatures.t
 t/003_methodcall.t

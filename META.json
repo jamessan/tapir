@@ -4,7 +4,7 @@
       "Eric Waters <ewaters@gmail.com>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4, CPAN::Meta::Converter version 2.120630",
+   "generated_by" : "Module::Build version 0.4003, CPAN::Meta::Converter version 2.120921",
    "license" : [
       "perl_5"
    ],
@@ -28,11 +28,16 @@
       },
       "runtime" : {
          "requires" : {
+            "Class::Accessor::Grouped" : "0",
             "Devel::Declare" : "0",
             "File::Spec" : "0",
+            "Log::Log4perl" : "0",
             "Moose" : "0",
             "POE::Component::Sequence" : "0.02",
-            "Thrift::Parser" : "0.06"
+            "Params::Validate" : "0",
+            "Thrift::Parser" : "0.06",
+            "Try::Tiny" : "0",
+            "perl" : "5.008"
          }
       }
    },
