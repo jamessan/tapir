@@ -2,10 +2,9 @@
     <head>
         <title>TapirClient Implementation Test</title>
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/dojo/1.8.0/dojo/dojo.js"></script>
-        <script type="text/javascript" src="js/Tapir.js"></script>
-        <script type="text/javascript" src="js/Tappy.js"></script>
-        <script type="text/javascript" src="js/utils.js"></script>
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+        <script type="text/javascript" src="js/Tapir.js"></script>
+        <script type="text/javascript" src="js/utils.js"></script>
         <script>
             var $j = jQuery.noConflict();
         </script>
@@ -83,29 +82,31 @@
 <script type="text/javascript">
 require(["dojo/_base/lang", "dojo/io-query"], function (lang, ioQuery) {
 
-    // Set some TapirClient global values for my web app
+    function setup () {
+        // Set some TapirClient global values for my web app
 
-    TapirClient.callUrl   = '/request';
-    TapirClient.cometdUrl = '/cometd';
+        TapirClient.callUrl   = '/request';
+        TapirClient.cometdUrl = '/cometd';
 
-    // Register my method result callbacks for pending results
+        // Register my method result callbacks for pending results
 
-    TapirClient.onPendingSuccess       = methodCallSuccess;
-    TapirClient.onPendingError         = methodCallError;
-    TapirClient.onPendingStatusMessage = methodCallStatusMessage;
+        TapirClient.onPendingSuccess       = methodCallSuccess;
+        TapirClient.onPendingError         = methodCallError;
+        TapirClient.onPendingStatusMessage = methodCallStatusMessage;
 
-    // Draw the Service selection drop down
+        // Draw the Service selection drop down
 
-    var selectService = $('selectService').appendChild($$('select', {}, [ $$('option') ]))
-        .addEventListenerChained('change', function (e) {
-            drawSelectMethod(this.value);
-        }, true);
-    for (var i in TapirClient.services) {
-        var service_name = TapirClient.services[i];
-        selectService.appendChild($$('option', { value: service_name }, [_(service_name)]));
-    }
+        var selectService = $('selectService').appendChild($$('select', {}, [ $$('option') ]))
+            .addEventListenerChained('change', function (e) {
+                drawSelectMethod(this.value);
+            }, true);
+        for (var i in TapirClient.services) {
+            var service_name = TapirClient.services[i];
+            selectService.appendChild($$('option', { value: service_name }, [_(service_name)]));
+        }
 
-    parseQueryString();
+        parseQueryString();
+    };
 
     // Parse the location query string and prepopulate stuff if necessary
 
@@ -513,8 +514,8 @@ require(["dojo/_base/lang", "dojo/io-query"], function (lang, ioQuery) {
         parentDiv.insertBefore(node, parentDiv.firstChild);
     }
 
+    TapirClient.loadJSONSpec('js/Tappy.json', setup);
 });
 </script>
-
 </body>
 </html>

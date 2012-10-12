@@ -6,9 +6,9 @@ use Getopt::Long;
 use Data::Dumper;
 use Thrift::IDL;
 use Tapir::Validator;
-use HTML::Mason;
 use FindBin;
 use List::Util qw(first);
+use Tapir::Documentation::JSONSpec;
 
 my %opt;
 
@@ -28,31 +28,15 @@ my $namespace = first { defined } map { $document->headers->[0]->namespace($_) }
 my @audit_errors = $validator->audit_idl_document($document);
 die "IDL file failed audit\n" if @audit_errors;
 
-my $comp_source;
-{
-    local $/ = undef;
-    $comp_source = <DATA>;
-}
-
-my $mason_output = '';
-my $interp = HTML::Mason::Interp->new(
-    out_method => \$mason_output,
-);
-my $comp = $interp->make_component( comp_file => $FindBin::Bin . '/tapir.mjs' );
-#my $comp = $interp->make_component( comp_source => $comp_source );
-
-my $return_value = $interp->exec(
-    $comp,
+my $json = Tapir::Documentation::JSONSpec->get_spec(
     namespace => $namespace,
     document => $document,
     types => $validator->{custom_types},
 );
 
-open my $out, '>', $opt{out} or die "Couldn't write to '$opt{out}': $!";
-print $out $mason_output;
+open my $out, '>', $opt{out} or die "Can't open '$opt{out}' for writing: $!";
+print $out $json . "\n";
 close $out;
 
-print "Wrote output to $opt{out}\n";
+print "Wrote JSON specification to $opt{out}\n";
 
-__DATA__
-This is <% 'Mason ' x 9 %>

@@ -1,5 +1,7 @@
 var TapirClient;
 
+require(["dojo/_base/xhr", "dojo/_base/array"], function (xhr, array) {
+
 dojo.provide('lib.TapirClient');
 
 dojo.declare('Tapir', null, {
@@ -351,6 +353,90 @@ dojo.declare('Tapir', null, {
             delete this.dojoSubscribeHandle;
         }
         dojox.cometd.disconnect();
+    },
+
+    loadJSONSpec: function (js_file, cb) {
+        var table2objects = function (data, columns) {
+            if (columns === undefined) {
+                columns = data.shift();
+            }
+            var objects = [], i, j, obj;
+            for (i = 0; i < data.length; i++) {
+                obj = {};
+                for (j = 0; j < columns.length; j++) {
+                    obj[ columns[j] ] = data[i][j];
+                }
+                objects.push(obj);
+            }
+            return objects;
+        };
+
+        var fieldHeader = ['index', 'name', 'optional', 'type', 'validateSpec'];
+
+        xhr.get({
+            url: js_file,
+            handleAs: 'json',
+            load: function (data) {
+                // typedefs
+                if (data.typedefs)
+                array.forEach(table2objects(data.typedefs), function (type) {
+                    dojo.declare(
+                        data.namespace + '.' + type.name,
+                        Tapir.Type.Custom,
+                        type
+                    );
+                });
+
+                // enums
+                if (data.enums)
+                array.forEach(table2objects(data.enums), function (type) {
+                    dojo.declare(
+                        data.namespace + '.' + type.name,
+                        Tapir.Type.Enum,
+                        {
+                            values: type.values
+                        }
+                    );
+                });
+
+                // structs
+                if (data.structs)
+                array.forEach(data.structs, function (struct) {
+                    dojo.declare(
+                        data.namespace + '.' + struct.name,
+                        eval(struct.baseClass),
+                        {
+                            fieldSpec: table2objects(struct.fieldSpec)
+                        }
+                    );
+                });
+
+                // services
+                if (data.services)
+                array.forEach(data.services, function (service) {
+                    dojo.declare(
+                        data.namespace + '.' + service.name,
+                        Tapir.Service,
+                        service
+                    );
+                    TapirClient.services.push(data.namespace + '.' + service.name);
+                });
+
+                // methods
+                if (data.methods)
+                array.forEach(table2objects(data.methods), function (method) {
+                    method.fieldSpec = table2objects(method.fieldSpec, fieldHeader);
+                    method.spec.exceptions = table2objects(method.spec.exceptions, fieldHeader);
+                    dojo.declare(
+                        data.namespace + '.' + method.serviceName + '.' + method.name,
+                        Tapir.Method,
+                        method
+                    );
+                });
+
+                if (cb) cb();
+            }
+        });
     }
 });
 
@@ -709,5 +795,6 @@ dojo.declare('Tapir.Method', Tapir.Type.Struct, {
 
         TapirClient.sendRequests([ request ]);
     }
+});
 
 });
