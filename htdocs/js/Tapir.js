@@ -127,7 +127,7 @@ dojo.declare('Tapir', null, {
     },
 
     checkValidateSpec: function (spec, value) {
-        var match;
+        var match, re;
         if (spec.type === 'range') {
             if (spec.low  !== null && value * 1 < spec.low * 1) {
                 return TapirClient.validateError("Too low");
@@ -144,9 +144,10 @@ dojo.declare('Tapir', null, {
                 return TapirClient.validateError("Too long");
             }
         }
-        else if (spec.type === 'regex' && (match = /^\/(.+)\/$/.exec(spec.pattern))) {
-            if (! new RegExp (match[1]).test(value)) {
-                return TapirClient.validateError("Doesn't follow RegExp form");
+        else if (spec.type === 'regex') {
+            re = new RegExp (spec.pattern);
+            if (! re.test(value)) {
+                return TapirClient.validateError("Doesn't follow RegExp form (" + re + ")");
             }
         }
         return true;
@@ -621,6 +622,8 @@ dojo.declare('Tapir.Type.Struct', Tapir.Type, {
             field = fields[i];
             val = params[field.name];
             delete params[field.name];
+
+            if (val === undefined && field.optional) continue;
 
             if (! field.validate(val)) {
                 return false;

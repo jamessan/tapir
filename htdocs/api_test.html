@@ -43,6 +43,12 @@
                 border: 1px solid #aaa;
                 padding: 5px;
             }
+            .fieldValue.not_defined input[type="text"] {
+                opacity: 0.3;
+            }
+            .fieldValue input[type="checkbox"] {
+                cursor: pointer;
+            }
             .container {
                 border: 1px solid black;
                 background-color: white;
@@ -75,6 +81,8 @@
     </div>
 
 <script type="text/javascript">
+require(["dojo/_base/lang", "dojo/io-query"], function (lang, ioQuery) {
+
     // Set some TapirClient global values for my web app
 
     TapirClient.callUrl   = '/request';
@@ -95,6 +103,27 @@
     for (var i in TapirClient.services) {
         var service_name = TapirClient.services[i];
         selectService.appendChild($$('option', { value: service_name }, [_(service_name)]));
+    }
+
+    parseQueryString();
+
+    // Parse the location query string and prepopulate stuff if necessary
+
+    function parseQueryString () {
+        var uri = window.location.href;
+        var query = uri.substring(uri.indexOf("?") + 1, uri.length);
+        if (! query) {
+            return;
+        }
+        var q = ioQuery.queryToObject(query);
+        if (q.service) {
+            $j('#selectService select').val(q.service);
+            drawSelectMethod(q.service);
+        }
+        if (q.method) {
+            $j('#selectMethod select').val(q.method);
+            drawMethodParams(q.service, q.method);
+        }
     }
 
     // When a Service is selected, draw the Method selection drop down
@@ -174,20 +203,19 @@
         var baseType = Field.Type().baseType();
         var classChain = baseType.classChainHash();
         var collectorFunc = null;
+        var parentElem = $j(parentDiv);
 
         if (classChain['Tapir.Type.Number']) {
-            var input = $$('input', { id: fieldId });
+            var input = $$('input', { type: 'text', id: fieldId });
             parentDiv.appendChild(input);
-            parentDiv.appendChild(_(' (number)'));
-            eval ("collectorFunc = function () { return $('" + fieldId + "').value }");
+            collectorFunc = lang.partial(collectNumberField, fieldId);
             if (defaultValues[ Field.name ])
                 input.value = defaultValues[ Field.name ];
         }
         else if (classChain['Tapir.Type.string']) {
-            var input = $$('input', { id: fieldId });
+            var input = $$('input', { type: 'text', id: fieldId });
             parentDiv.appendChild(input);
-            parentDiv.appendChild(_(' (string)'));
-            eval ("collectorFunc = function () { return $('" + fieldId + "').value }");
+            collectorFunc = lang.partial(collectStringField, fieldId);
             if (defaultValues[ Field.name ])
                 input.value = defaultValues[ Field.name ];
         }
@@ -196,7 +224,7 @@
             parentDiv.appendChild(input);
             for (var name in baseType.values)
                 input.appendChild($$('option', { value: name }, [_(name)]));
-            eval ("collectorFunc = function () { return $('" + fieldId + "').value }");
+            collectorFunc = lang.partial(collectEnumField, fieldId);
             // if (defaultValues[ Field.name ]) FIXME
         }
         else if (classChain['Tapir.Type.Struct']) {
@@ -224,20 +252,12 @@
                 collectorFuncs[ subField.name ] = collectorFunc;
             }
 
-            collectorFunc = function () {
-                var struct = {};
-                for (var key in collectorFuncs) {
-                    var val = collectorFuncs[key]();
-                    if (val == null || val.length == 0) continue;
-                    struct[key] = val;
-                }
-                return struct;
-            };
+            collectorFunc = lang.partial(collectStruct, collectorFuncs);
         }
         else if (classChain['Tapir.Type.bool']) {
             var input = $$('input', { type: 'checkbox', id: fieldId });
             parentDiv.appendChild(input);
-            eval ("collectorFunc = function () { return $('" + fieldId + "').checked ? true : false }");
+            collectorFunc = lang.partial(collectBool, fieldId);
             if (defaultValues[ Field.name ]) input.checked = true;
         }
         else if (classChain['Tapir.Type.Container']) {
@@ -330,7 +350,68 @@
             return null;
         }
 
+        if (Field.optional) {
+            var checkbox_is_defined_id = fieldId + '_is_defined';
+            parentElem.addClass('not_defined');
+            $j('<input type="checkbox"/>')
+                .attr({
+                    id: checkbox_is_defined_id
+                })
+                .appendTo($j(parentDiv))
+                .click(toggleFieldDefined);
+            collectorFunc = lang.partial(collectOptionalCollector, fieldId, collectorFunc);
+        }
+
         return collectorFunc;
+    }
+
+    function collectOptionalCollector (fieldId, collectorFunc) {
+        var is_defined_ck = $j('#' + fieldId + '_is_defined');
+        if (is_defined_ck && ! is_defined_ck.attr('checked')) {
+            return null;
+        }
+        return collectorFunc();
+    }
+
+    function collectStruct (collectorFuncs) {
+        var struct = {};
+        for (var key in collectorFuncs) {
+            var val = collectorFuncs[key]();
+            if (val === null) continue;
+            struct[key] = val;
+        }
+        return struct;
+    }
+
+    function collectBool (fieldId) {
+        return $j('#' + fieldId).checked ? true : false;
+    }
+
+    function collectNumberField (fieldId) {
+        return collectField(fieldId);
+    }
+
+    function collectStringField (fieldId) {
+        return collectField(fieldId);
+    }
+
+    function collectEnumField (fieldId) {
+        return collectField(fieldId);
+    }
+
+    function collectField (fieldId) {
+        var elem = $j('#' + fieldId);
+        return elem.val();
+    }
+
+    function toggleFieldDefined (e) {
+        var elem = $j(this);
+        if (elem.attr('checked')) {
+            elem.parent().removeClass('not_defined');
+        }
+        else {
+            elem.parent().addClass('not_defined');
+        }
     }
 
     // When the submit button is pressed, collect the Method parameters and make the call
@@ -343,14 +424,14 @@
         for (var i in formMeta.fields) {
             var details = formMeta.fields[i];
             var value = details.collectorFunc();
-            if (value != null && value.length == 0) value = null;
 
             var fieldError = $(details.fieldId + '_error');
             fieldError.removeChildren();
 
-            if (details.Field.optional && value == null) continue;
+            if (details.Field.optional && value === null) continue;
 
             if (! details.Field.Type().validate(value)) {
+                console.info("Field " + details.Field.name + " has an error: " + TapirClient.lastValidateError);
                 fieldError.appendChild(_( TapirClient.lastValidateError ));
                 errors++;
                 continue;
@@ -432,6 +513,7 @@
         parentDiv.insertBefore(node, parentDiv.firstChild);
     }
 
+});
 </script>
 
 </body>
