@@ -50,8 +50,9 @@ sub new {
     # Create the PoCo::Sequence first
     my $self = $class->SUPER::new();
 
-    $args{arguments} ||= $args{message}->arguments;
-    $args{method}    ||= $args{message}->method->idl;
+    $args{arguments} ||= $args{message}->arguments if $args{message};
+    $args{method}    ||= $args{message}->method->idl if $args{message};
+    $args{logger}    ||= $args{server}->logger if $args{server};
 
     # Assign to my scalar accessors
     $self->$_($args{$_}) foreach keys %args;

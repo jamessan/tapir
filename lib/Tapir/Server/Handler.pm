@@ -17,6 +17,16 @@ sub add_method {
     }
 }
 
+sub service_methods {
+    my $class = shift;
+    my $methods = $class->methods;
+    return {
+        map { $_ => $methods->{$_} }
+        grep { $methods->{$_} eq 'normal' }
+        keys %$methods
+    };
+}
+
 sub add_call_actions {
     my ($class, $call) = @_;
 
