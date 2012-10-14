@@ -29,7 +29,17 @@ sub setup {
         )] ]
     );
 
-    $self->logger->info("Setup called!");
+    ## Find all the @rest methods
+
+    foreach my $handler (@{ $self->server->handlers }) {
+        my $idl_service = $handler->{idl_service};
+        foreach my $method (keys %{ $handler->{methods} }) {
+            my $idl_method = $idl_service->method_named($method);
+            my $rest = $idl_method->{doc}{rest};
+            next unless $rest;
+            $self->logger->info(sprintf "Listening for %s %s", uc($rest->{method}), $rest->{route});
+        }
+    }
 }
 
 sub run {
