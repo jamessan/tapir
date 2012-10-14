@@ -20,7 +20,6 @@ use Thrift::Parser;
 use Tapir::Logger;
 use Tapir::Validator;
 
-
 sub is_valid_request {
     my ($self, %opt) = @_;
 
@@ -120,22 +119,36 @@ sub add_transport {
     push @{ $self->transports }, $transport;
 }
 
-sub add_call_actions {
+sub parser_for_call {
+    my ($self, $call) = @_;
+
+    my @handlers = $self->match_handlers_to_call($call);
+    return $handlers[0]{parser};
+}
+
+sub match_handlers_to_call {
     my ($self, $call) = @_;
 
     my $service_name = $call->service->name;
     my $method_name  = $call->method->name;
 
-    my $handlers_found = 0;
+    my @handlers;
     foreach my $handler (@{ $self->handlers }) {
         next unless $handler->{service} eq $service_name;
         next unless $handler->{methods}{$method_name};
-        $handlers_found++;
-        $handler->{class}->add_call_actions($call);
+        push @handlers, $handler;
     }
+    if (! @handlers) {
+        croak "No handlers found for service call '%s.%s'", $call->service->name, $call->method->name;
+    }
+    return @handlers;
+}
 
-    if (! $handlers_found) {
-        croak "No handlers found for service call '$service_name.$method_name'";
+sub add_call_actions {
+    my ($self, $call) = @_;
+
+    foreach my $handler ($self->match_handlers_to_call($call)) {
+        $handler->{class}->add_call_actions($call);
     }
 }
 
