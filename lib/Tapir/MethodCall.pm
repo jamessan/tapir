@@ -168,7 +168,7 @@ sub dereference_fieldset {
     return \%return;
 }
 
-=heac2 headers
+=head2 headers
 
 Returns an arrayref of AMQP headers.  You probably want header() (below).
 

@@ -1,0 +1,44 @@
+Revision history for Tapir
+
+v0.03  Tue, 9 Oct 2012 23:31:11 -0400
+
+ - Bump version
+ - Formatting
+ - Much improved api_test interface
+ - Better formatting of fields
+ - Better handling of the namespaced generated classes
+ - Allow @optional to be a proper attribute in docs
+ - Fixed bug of @optional flag not being recognized
+ - Approaching usable JavaScript browser client
+ - Minor case change
+ - I actually prefer four spaces over <tab> for indentation
+ - Some minor fixes
+ - Whitespace changes; added type double
+ - Initial commit of JS code
+ - Make validator self-documenting; passing documentation test
+ - Ignore .workonrc
+ - Add test for validation and some new subclasses
+ - Add a good dev tool
+ - Use File::Spec for safe cross platform filenames
+ - Begin work to test doc generation
+ - Rename binaries
+ - Move logic for generate docs into a module
+ - Merge branch 'master' of github.com:ewaters/tapir
+ - Better output in the generate_docs.pl
+
+v0.02  Mon, 1 Oct 2012 10:03:16 -0400
+
+ - New version
+ - More gitignore stuff
+ - Start support for '@default'
+ - Merge branch 'master' of github.com:ewaters/tapir
+ - Add args_thrift and change behavior of args on MethodCall
+ - Expose ::Server::Handler::Signatures::ALLOW_REDEFINE
+
+v0.01  Fri, 21 Sep 2012 12:59:22 -0400
+
+ - One thing missing in skip
+ - Build files
+ - Add bin/ (from tapir-misc) and write tests
+ - Initial commit; copied from tapir-misc repo
+
