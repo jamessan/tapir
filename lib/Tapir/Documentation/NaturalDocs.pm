@@ -7,6 +7,7 @@ use Thrift::IDL;
 use File::Copy;
 use File::Path;
 use File::Spec;
+use File::Basename qw(dirname);
 use Tapir::Validator;
 
 my ($nd, %created_files, %args, $document);
@@ -23,7 +24,7 @@ sub build {
 
     foreach my $dir (map { $args{$_} } qw(process_dir project_dir output_dir)) {
         next if -d $dir;
-        system 'mkdir', '-p', $dir;
+        mkpath($dir);
     }
 
     ## Read the document and audit it
@@ -161,10 +162,10 @@ sub build {
     ## Run NaturalDocs on the process directoy
 
     if ($args{static_dir} && -d $args{static_dir}) {
-        foreach my $file (glob "$args{static_dir}/*") {
-            my ($local) = $file =~ m{^$args{static_dir}/(.+)$};
-            my $dest_file = $args{process_dir} . '/' . $local;
-            my ($dest_dir) = $dest_file =~ m{^(.+?)/[^/]+$};
+        foreach my $file (glob File::Spec->catfile($args{static_dir}, '*')) {
+            my ($local) = $file =~ m{^\Q$args{static_dir}\E[\\/](.+)$};
+            my $dest_file = File::Spec->catfile($args{process_dir}, $local);
+            my ($dest_dir) = dirname($dest_file);
             -d $dest_dir || mkpath($dest_dir);
             copy($file, $dest_file);
             $created_files{$local}++;
@@ -172,8 +173,8 @@ sub build {
     }
 
     # Delete any files found in the process directory that I didn't create during this session
-    foreach my $process_file (glob "$args{process_dir}/*") {
-        my ($local) = $process_file =~ m{^$args{process_dir}/(.+)$};
+    foreach my $process_file (glob File::Spec->catfile($args{process_dir}, '*')) {
+        my ($local) = $process_file =~ m{^\Q$args{process_dir}\E[\\/](.+)$};
         next if $created_files{$local};
         unlink $process_file;
     }
